@@ -20,14 +20,17 @@
 #include <vector>
 #include <chrono>
 
-#include "Views.h"
+#include "Views.hpp"
+#include "definitions.h"
+#include "util.hpp"
 
 //> Eigen library
 #include <Eigen/Core>
 #include <Eigen/Dense>
 
-namespace magmaHCWrapper {
-
+namespace TrifocalViewsWrapper {
+    
+    //extern "C"
     Trifocal_Views::Trifocal_Views(
         int cam1_idx, int cam2_idx, int cam3_idx, 
         int curve1_idx, int curve2_idx, int curve3_idx, 
@@ -36,6 +39,17 @@ namespace magmaHCWrapper {
      Curve1_Index(curve1_idx), Curve2_Index(curve2_idx), Curve3_Index(curve3_idx),
      Dataset_Path(dataset_dir) 
      {
+        //> Calibration matrix
+        /*K(0,0) = 2584.932509819502; //> fx
+        K(0,1) = 0;
+        K(0,2) = 249.771375872214;  //> cx
+        K(1,0) = 0;
+        K(1,1) = 2584.791860605769; //> fy
+        K(1,2) = 278.312679379194;  //> cy
+        K(2,0) = 0;
+        K(2,1) = 0;
+        K(2,2) = 0;*/
+
         int n_zero = 4;
         View1_Indx_Str = std::string(n_zero - std::min(n_zero, (int)(std::to_string(View1_Index).length())), '0') + std::to_string(View1_Index);
         View2_Indx_Str = std::string(n_zero - std::min(n_zero, (int)(std::to_string(View2_Index).length())), '0') + std::to_string(View2_Index);
@@ -54,6 +68,7 @@ namespace magmaHCWrapper {
         }
     }
 
+    //extern "C"
     void Trifocal_Views::Read_In_Dataset_ImagePoints() {
         //> Set path to read image 2D points
         std::string View1_Points2D_Path = Dataset_Path + "frame_" + View1_Indx_Str + "-pts-2D.txt";
@@ -69,12 +84,12 @@ namespace magmaHCWrapper {
         else {
             while ( View1_Points2D_File >> subpix_x >> subpix_y ) {
                 Eigen::Vector2d subpix_Curve_Point2D{subpix_x, subpix_y};
-                cam1.img_points.push_back(subpix_Curve_Point2D);
+                cam1.img_points_pixels.push_back(subpix_Curve_Point2D);
 
                 //> Push the image curve points (three curves) on view 1
-                //if ( Curve_Index_Collection_List[readin_counter] == Curve1_Index ) cam1.img_points_on_curve[0].push_back(subpix_Curve_Point2D);
-                //if ( Curve_Index_Collection_List[readin_counter] == Curve2_Index ) cam1.img_points_on_curve[1].push_back(subpix_Curve_Point2D);
-                //if ( Curve_Index_Collection_List[readin_counter] == Curve3_Index ) cam1.img_points_on_curve[2].push_back(subpix_Curve_Point2D);
+                //if ( Curve_Index_Collection_List[readin_counter] == Curve1_Index ) cam1.img_points_pixels_on_curve[0].push_back(subpix_Curve_Point2D);
+                //if ( Curve_Index_Collection_List[readin_counter] == Curve2_Index ) cam1.img_points_pixels_on_curve[1].push_back(subpix_Curve_Point2D);
+                //if ( Curve_Index_Collection_List[readin_counter] == Curve3_Index ) cam1.img_points_pixels_on_curve[2].push_back(subpix_Curve_Point2D);
                 //readin_counter++;
             }
         }
@@ -87,12 +102,12 @@ namespace magmaHCWrapper {
         else {
             while ( View2_Points2D_File >> subpix_x >> subpix_y ) {
                 Eigen::Vector2d subpix_Curve_Point2D{subpix_x, subpix_y};
-                cam2.img_points.push_back(subpix_Curve_Point2D);
+                cam2.img_points_pixels.push_back(subpix_Curve_Point2D);
 
                 //> Push the image curve points (three curves) on view 2
-                //if ( Curve_Index_Collection_List[readin_counter] == Curve1_Index ) cam2.img_points_on_curve[0].push_back(subpix_Curve_Point2D);
-                //if ( Curve_Index_Collection_List[readin_counter] == Curve2_Index ) cam2.img_points_on_curve[1].push_back(subpix_Curve_Point2D);
-                //if ( Curve_Index_Collection_List[readin_counter] == Curve3_Index ) cam2.img_points_on_curve[2].push_back(subpix_Curve_Point2D);
+                //if ( Curve_Index_Collection_List[readin_counter] == Curve1_Index ) cam2.img_points_pixels_on_curve[0].push_back(subpix_Curve_Point2D);
+                //if ( Curve_Index_Collection_List[readin_counter] == Curve2_Index ) cam2.img_points_pixels_on_curve[1].push_back(subpix_Curve_Point2D);
+                //if ( Curve_Index_Collection_List[readin_counter] == Curve3_Index ) cam2.img_points_pixels_on_curve[2].push_back(subpix_Curve_Point2D);
                 //readin_counter++;
             }
         }
@@ -105,17 +120,18 @@ namespace magmaHCWrapper {
         else {
             while ( View3_Points2D_File >> subpix_x >> subpix_y ) {
                 Eigen::Vector2d subpix_Curve_Point2D{subpix_x, subpix_y};
-                cam3.img_points.push_back(subpix_Curve_Point2D);
+                cam3.img_points_pixels.push_back(subpix_Curve_Point2D);
 
                 //> Push the image curve points (three curves) on view 3
-                //if ( Curve_Index_Collection_List[readin_counter] == Curve1_Index ) cam3.img_points_on_curve[0].push_back(subpix_Curve_Point2D);
-                //if ( Curve_Index_Collection_List[readin_counter] == Curve2_Index ) cam3.img_points_on_curve[1].push_back(subpix_Curve_Point2D);
-                //if ( Curve_Index_Collection_List[readin_counter] == Curve3_Index ) cam3.img_points_on_curve[2].push_back(subpix_Curve_Point2D);
+                //if ( Curve_Index_Collection_List[readin_counter] == Curve1_Index ) cam3.img_points_pixels_on_curve[0].push_back(subpix_Curve_Point2D);
+                //if ( Curve_Index_Collection_List[readin_counter] == Curve2_Index ) cam3.img_points_pixels_on_curve[1].push_back(subpix_Curve_Point2D);
+                //if ( Curve_Index_Collection_List[readin_counter] == Curve3_Index ) cam3.img_points_pixels_on_curve[2].push_back(subpix_Curve_Point2D);
                 //readin_counter++;
             }
         }
     }
 
+    //extern "C"
     void Trifocal_Views::Read_In_Dataset_ImageTangents() {
         //> Set path to read image 2D tangents
         std::string View1_Tangents2D_Path = Dataset_Path + "frame_" + View1_Indx_Str + "-tgts-2D.txt";
@@ -131,10 +147,10 @@ namespace magmaHCWrapper {
         else {
             while ( View1_Tangents2D_File >> subpix_x >> subpix_y ) {
                 Eigen::Vector2d subpix_Curve_Tangent2D{subpix_x, subpix_y};
-                cam1.img_tangents.push_back(subpix_Curve_Tangent2D);
+                cam1.img_tangents_pixels.push_back(subpix_Curve_Tangent2D);
 
                 //> Push the image curve tangents on view 1
-                //if ( Curve_Index_Collection_List[readin_counter] == Curve1_Index ) cam1.img_tangents_on_curve.push_back(subpix_Curve_Tangent2D);
+                //if ( Curve_Index_Collection_List[readin_counter] == Curve1_Index ) cam1.img_tangents_pixels_on_curve.push_back(subpix_Curve_Tangent2D);
                 //readin_counter++;
             }
         }
@@ -147,10 +163,10 @@ namespace magmaHCWrapper {
         else {
             while ( View2_Tangents2D_File >> subpix_x >> subpix_y ) {
                 Eigen::Vector2d subpix_Curve_Tangent2D{subpix_x, subpix_y};
-                cam2.img_tangents.push_back(subpix_Curve_Tangent2D);
+                cam2.img_tangents_pixels.push_back(subpix_Curve_Tangent2D);
 
                 //> Push the image curve tangents on view 2
-                //if ( Curve_Index_Collection_List[readin_counter] == Curve2_Index ) cam2.img_tangents_on_curve.push_back(subpix_Curve_Tangent2D);
+                //if ( Curve_Index_Collection_List[readin_counter] == Curve2_Index ) cam2.img_tangents_pixels_on_curve.push_back(subpix_Curve_Tangent2D);
                 //readin_counter++;
             }
         }
@@ -163,10 +179,10 @@ namespace magmaHCWrapper {
         else {
             while ( View3_Tangents2D_File >> subpix_x >> subpix_y ) {
                 Eigen::Vector2d subpix_Curve_Tangent2D{subpix_x, subpix_y};
-                cam3.img_tangents.push_back(subpix_Curve_Tangent2D);
+                cam3.img_tangents_pixels.push_back(subpix_Curve_Tangent2D);
 
                 //> Push the image curve tangents on view 3
-                //if ( Curve_Index_Collection_List[readin_counter] == Curve3_Index ) cam3.img_tangents_on_curve.push_back(subpix_Curve_Tangent2D);
+                //if ( Curve_Index_Collection_List[readin_counter] == Curve3_Index ) cam3.img_tangents_pixels_on_curve.push_back(subpix_Curve_Tangent2D);
                 //readin_counter++;
             }
         }
@@ -227,9 +243,16 @@ namespace magmaHCWrapper {
             Camera_Intrinsic_Matrix_File >> K(1,0) >> K(1,1) >> K(1,2);
             Camera_Intrinsic_Matrix_File >> K(2,0) >> K(2,1) >> K(2,2);
         }
+
+        //> Get the inverse of the calibration matrix
+        inv_K = K.inverse();
+
+        if (DEBUG) std::cout << "Calibration matrix: " << K << std::endl;
+
     }
 
-    void Trifocal_Views::Add_Noise_to_Points_on_Curves(float outlier_ratio) {
+    //extern "C"
+    void Trifocal_Views::Add_Noise_to_Points_on_Curves() {
         //> Set Perturbations for Inliers
         std::default_random_engine generator(1);
         std::normal_distribution<double> Noise_Distribution_On_Inliers(0, 0.5);
@@ -237,20 +260,25 @@ namespace magmaHCWrapper {
         std::uniform_int_distribution<int> theta(-10000, 10000);
 
         //> Create sizes for the vector structures
-        int Number_Of_Points = cam1.img_points.size();
-        cam1.img_perturbed_points.resize(Number_Of_Points);
-        cam2.img_perturbed_points.resize(Number_Of_Points);
-        cam3.img_perturbed_points.resize(Number_Of_Points);
-        cam1.img_perturbed_tangents.resize(Number_Of_Points);
-        cam2.img_perturbed_tangents.resize(Number_Of_Points);
-        cam3.img_perturbed_tangents.resize(Number_Of_Points);
+        const int Number_Of_Points = cam1.img_points_pixels.size();
+        cam1.img_perturbed_points_pixels.resize(Number_Of_Points);
+        cam2.img_perturbed_points_pixels.resize(Number_Of_Points);
+        cam3.img_perturbed_points_pixels.resize(Number_Of_Points);
+        cam1.img_perturbed_tangents_pixels.resize(Number_Of_Points);
+        cam2.img_perturbed_tangents_pixels.resize(Number_Of_Points);
+        cam3.img_perturbed_tangents_pixels.resize(Number_Of_Points);
 
         //> Generate Outlier Point Indices;
         std::vector<int> All_Points_Indices;
-        generateRandPermIndices( Number_Of_Points, All_Points_Indices);
-        Number_Of_Outliers = (int)(cam1.img_points.size() * outlier_ratio);
+        generateRandPermIndices( Number_Of_Points, All_Points_Indices );
+        Number_Of_Outliers = (int)(cam1.img_points_pixels.size() * OUTLIER_RATIO);
         std::cout << "Number of Outliers = " << Number_Of_Outliers << std::endl << "Outliers:" << std::endl;
-        bool Boolean_Outlier_Indices[Number_Of_Points] = {false};
+
+        //> List of Indices Indicating whether the point index is an outlier or not
+        //> Note: Variable-sized Array Must Be Initialized Properly 
+        bool Boolean_Outlier_Indices[Number_Of_Points];
+        std::fill_n (Boolean_Outlier_Indices, Number_Of_Points, false);
+        //memcpy(Boolean_Outlier_Indices, (bool[]){ false }, sizeof(Boolean_Outlier_Indices));
         for (int oi = 0; oi < Number_Of_Outliers; oi++) { 
             int indx = All_Points_Indices[oi];
             Boolean_Outlier_Indices[indx] = true;
@@ -273,23 +301,23 @@ namespace magmaHCWrapper {
             if (is_outlier) {
                 Outlier_Mag = Noise_Distribution_On_Outliers(generator);
                 angle =  M_PI * (theta(generator) / 10000.0);
-                cam1.img_perturbed_points[pi]   = cam1.img_points[pi] + Eigen::Vector2d(Outlier_Mag*cos(angle), Outlier_Mag*sin(angle));
-                cam1.img_perturbed_tangents[pi] = cam1.img_tangents[pi];
+                cam1.img_perturbed_points_pixels[pi]   = cam1.img_points_pixels[pi] + Eigen::Vector2d(Outlier_Mag*cos(angle), Outlier_Mag*sin(angle));
+                cam1.img_perturbed_tangents_pixels[pi] = cam1.img_tangents_pixels[pi];
 
                 /*if (outlier_counter < 10) {
-                    std::cout << "O: (" << cam1.img_points[pi](0) << ", " << cam1.img_points[pi](1) << ") -> (";
-                    std::cout << cam1.img_perturbed_points[pi](0) << ", " << cam1.img_perturbed_points[pi](1) << ")" << std::endl;
+                    std::cout << "O: (" << cam1.img_points_pixels[pi](0) << ", " << cam1.img_points_pixels[pi](1) << ") -> (";
+                    std::cout << cam1.img_perturbed_points_pixels[pi](0) << ", " << cam1.img_perturbed_points_pixels[pi](1) << ")" << std::endl;
                 }*/
             }
             else {
                 Inlier_Mag  = Noise_Distribution_On_Inliers(generator);
                 angle =  M_PI * (theta(generator) / 10000.0);
-                cam1.img_perturbed_points[pi]   = cam1.img_points[pi] + Eigen::Vector2d(Inlier_Mag*cos(angle), Inlier_Mag*sin(angle));
-                cam1.img_perturbed_tangents[pi] = cam1.img_tangents[pi];
+                cam1.img_perturbed_points_pixels[pi]   = cam1.img_points_pixels[pi] + Eigen::Vector2d(Inlier_Mag*cos(angle), Inlier_Mag*sin(angle));
+                cam1.img_perturbed_tangents_pixels[pi] = cam1.img_tangents_pixels[pi];
 
                 if (pi < 10) {
-                    std::cout << "I: (" << cam1.img_points[pi](0) << ", " << cam1.img_points[pi](1) << ") -> (";
-                    std::cout << cam1.img_perturbed_points[pi](0) << ", " << cam1.img_perturbed_points[pi](1) << ")" << std::endl;
+                    std::cout << "I: (" << cam1.img_points_pixels[pi](0) << ", " << cam1.img_points_pixels[pi](1) << ") -> (";
+                    std::cout << cam1.img_perturbed_points_pixels[pi](0) << ", " << cam1.img_perturbed_points_pixels[pi](1) << ")" << std::endl;
                 }
             }
 
@@ -297,36 +325,124 @@ namespace magmaHCWrapper {
             if (is_outlier) {
                 Outlier_Mag = Noise_Distribution_On_Outliers(generator);
                 angle =  M_PI * (theta(generator) / 10000.0);
-                cam2.img_perturbed_points[pi]   = cam2.img_points[pi] + Eigen::Vector2d(Outlier_Mag*cos(angle), Outlier_Mag*sin(angle));
-                cam2.img_perturbed_tangents[pi] = cam2.img_tangents[pi];
+                cam2.img_perturbed_points_pixels[pi]   = cam2.img_points_pixels[pi] + Eigen::Vector2d(Outlier_Mag*cos(angle), Outlier_Mag*sin(angle));
+                cam2.img_perturbed_tangents_pixels[pi] = cam2.img_tangents_pixels[pi];
             }
             else {
                 Inlier_Mag  = Noise_Distribution_On_Inliers(generator);
                 angle =  M_PI * (theta(generator) / 10000.0);
-                cam2.img_perturbed_points[pi]   = cam2.img_points[pi] + Eigen::Vector2d(Inlier_Mag*cos(angle), Inlier_Mag*sin(angle));
-                cam2.img_perturbed_tangents[pi] = cam2.img_tangents[pi];
+                cam2.img_perturbed_points_pixels[pi]   = cam2.img_points_pixels[pi] + Eigen::Vector2d(Inlier_Mag*cos(angle), Inlier_Mag*sin(angle));
+                cam2.img_perturbed_tangents_pixels[pi] = cam2.img_tangents_pixels[pi];
             }
 
             //> 2) View 3
             if (is_outlier) {
                 Outlier_Mag = Noise_Distribution_On_Outliers(generator);
                 angle =  M_PI * (theta(generator) / 10000.0);
-                cam3.img_perturbed_points[pi]   = cam3.img_points[pi] + Eigen::Vector2d(Outlier_Mag*cos(angle), Outlier_Mag*sin(angle));
-                cam3.img_perturbed_tangents[pi] = cam3.img_tangents[pi];
+                cam3.img_perturbed_points_pixels[pi]   = cam3.img_points_pixels[pi] + Eigen::Vector2d(Outlier_Mag*cos(angle), Outlier_Mag*sin(angle));
+                cam3.img_perturbed_tangents_pixels[pi] = cam3.img_tangents_pixels[pi];
                 outlier_counter++;
             }
             else {
                 Inlier_Mag  = Noise_Distribution_On_Inliers(generator);
                 angle =  M_PI * (theta(generator) / 10000.0);
-                cam3.img_perturbed_points[pi]   = cam3.img_points[pi] + Eigen::Vector2d(Inlier_Mag*cos(angle), Inlier_Mag*sin(angle));
-                cam3.img_perturbed_tangents[pi] = cam3.img_tangents[pi];
+                cam3.img_perturbed_points_pixels[pi]   = cam3.img_points_pixels[pi] + Eigen::Vector2d(Inlier_Mag*cos(angle), Inlier_Mag*sin(angle));
+                cam3.img_perturbed_tangents_pixels[pi] = cam3.img_tangents_pixels[pi];
             }
-
-            
         }
-
     }
 
+    void Trifocal_Views::Convert_From_Pixels_to_Meters() {
+        const int Number_Of_Points = cam1.img_points_pixels.size();
+        Eigen::Vector3d Homogeneous_Img_Points_Pixels{0.0, 0.0, 1.0};
+        Eigen::Vector3d Homogeneous_Img_Tangents_Pixels{0.0, 0.0, 0.0};
+        Eigen::Vector3d Homogeneous_Point_in_Meters, Homogeneous_Tangent_in_Meters;
+        Eigen::Vector2d Point_in_Meters, Tangent_in_Meters;
+        for (int pi = 0; pi < Number_Of_Points; pi++) {
+            //> Unperturbed Points
+            //> Camera 1
+            Homogeneous_Img_Points_Pixels(0) = cam1.img_points_pixels[pi](0);
+            Homogeneous_Img_Points_Pixels(1) = cam1.img_points_pixels[pi](1);
+            //Homogeneous_Img_Points_Pixels(2) = 1.0;
+            Homogeneous_Point_in_Meters = inv_K * Homogeneous_Img_Points_Pixels;
+            cam1.img_points_meters.push_back( {Homogeneous_Point_in_Meters(0), Homogeneous_Point_in_Meters(1) } );
+
+            //> Camera 2
+            Homogeneous_Img_Points_Pixels(0) = cam2.img_points_pixels[pi](0);
+            Homogeneous_Img_Points_Pixels(1) = cam2.img_points_pixels[pi](1);
+            Homogeneous_Point_in_Meters = inv_K * Homogeneous_Img_Points_Pixels;
+            cam2.img_points_meters.push_back( { Homogeneous_Point_in_Meters(0), Homogeneous_Point_in_Meters(1) } );
+
+            //> Camera 3
+            Homogeneous_Img_Points_Pixels(0) = cam3.img_points_pixels[pi](0);
+            Homogeneous_Img_Points_Pixels(1) = cam3.img_points_pixels[pi](1);
+            Homogeneous_Point_in_Meters = inv_K * Homogeneous_Img_Points_Pixels;
+            cam3.img_points_meters.push_back( { Homogeneous_Point_in_Meters(0), Homogeneous_Point_in_Meters(1) } );
+
+            //> Perturbed Points
+            //> Camera 1
+            Homogeneous_Img_Points_Pixels(0) = cam1.img_perturbed_points_pixels[pi](0);
+            Homogeneous_Img_Points_Pixels(1) = cam1.img_perturbed_points_pixels[pi](1);
+            Homogeneous_Point_in_Meters = inv_K * Homogeneous_Img_Points_Pixels;
+            cam1.img_perturbed_tangents_meters.push_back( { Homogeneous_Point_in_Meters(0), Homogeneous_Point_in_Meters(1) } );
+
+            //> Camera 2
+            Homogeneous_Img_Points_Pixels(0) = cam2.img_perturbed_points_pixels[pi](0);
+            Homogeneous_Img_Points_Pixels(1) = cam2.img_perturbed_points_pixels[pi](1);
+            Homogeneous_Point_in_Meters = inv_K * Homogeneous_Img_Points_Pixels;
+            cam2.img_perturbed_tangents_meters.push_back( { Homogeneous_Point_in_Meters(0), Homogeneous_Point_in_Meters(1) } );
+
+            //> Camera 3
+            Homogeneous_Img_Points_Pixels(0) = cam3.img_perturbed_points_pixels[pi](0);
+            Homogeneous_Img_Points_Pixels(1) = cam3.img_perturbed_points_pixels[pi](1);
+            Homogeneous_Point_in_Meters = inv_K * Homogeneous_Img_Points_Pixels;
+            cam3.img_perturbed_tangents_meters.push_back( { Homogeneous_Point_in_Meters(0), Homogeneous_Point_in_Meters(1) } );
+
+            //> Unperturbed tangents
+            //> Camera 1
+            Homogeneous_Img_Tangents_Pixels(0) = cam1.img_tangents_pixels[pi](0);
+            Homogeneous_Img_Tangents_Pixels(1) = cam1.img_tangents_pixels[pi](1);
+            //Homogeneous_Img_Points_Pixels(2) = 1.0;
+            Homogeneous_Tangent_in_Meters = inv_K * Homogeneous_Img_Tangents_Pixels;
+            cam1.img_tangents_meters.push_back( { Homogeneous_Tangent_in_Meters(0), Homogeneous_Tangent_in_Meters(1) } );
+            cam1.img_perturbed_tangents_meters.push_back( { Homogeneous_Tangent_in_Meters(0), Homogeneous_Tangent_in_Meters(1) } );
+
+            //> Camera 2
+            Homogeneous_Img_Tangents_Pixels(0) = cam2.img_tangents_pixels[pi](0);
+            Homogeneous_Img_Tangents_Pixels(1) = cam2.img_tangents_pixels[pi](1);
+            Homogeneous_Tangent_in_Meters = inv_K * Homogeneous_Img_Tangents_Pixels;
+            cam2.img_tangents_meters.push_back( { Homogeneous_Tangent_in_Meters(0), Homogeneous_Tangent_in_Meters(1) } );
+            cam2.img_perturbed_tangents_meters.push_back( { Homogeneous_Tangent_in_Meters(0), Homogeneous_Tangent_in_Meters(1) } );
+
+            //> Camera 3
+            Homogeneous_Img_Tangents_Pixels(0) = cam3.img_tangents_pixels[pi](0);
+            Homogeneous_Img_Tangents_Pixels(1) = cam3.img_tangents_pixels[pi](1);
+            Homogeneous_Tangent_in_Meters = inv_K * Homogeneous_Img_Tangents_Pixels;
+            cam3.img_tangents_meters.push_back( { Homogeneous_Tangent_in_Meters(0), Homogeneous_Tangent_in_Meters(1) } );
+            cam3.img_perturbed_tangents_meters.push_back( { Homogeneous_Tangent_in_Meters(0), Homogeneous_Tangent_in_Meters(1)} );
+        }
+    }
+
+    void Trifocal_Views::Compute_Trifocal_Relative_Pose_Ground_Truth() {
+        //R12 = abs_R2 * abs_R1';
+        //T12 = -abs_R2 * abs_R1' * abs_T1 + abs_T2;
+        MultiviewGeometryUtil::multiview_geometry_util mg_util;
+
+        R21 = cam2.abs_R * cam1.abs_R.transpose();
+        R21 = mg_util.Normalize_Rotation_Matrix( R21 );
+        T21 = -cam2.abs_R * cam1.abs_R.transpose() * cam1.abs_T + cam2.abs_T;
+        T21 = mg_util.Normalize_Translation_Vector( T21 );
+
+        R31 = cam3.abs_R * cam1.abs_R.transpose();
+        R31 = mg_util.Normalize_Rotation_Matrix( R31 );
+        T31 = -cam3.abs_R * cam1.abs_R.transpose() * cam1.abs_T + cam3.abs_T;
+        T31 = mg_util.Normalize_Translation_Vector( T31 );
+
+        F21 = mg_util.getFundamentalMatrix( inv_K, R21, T21 );
+        F31 = mg_util.getFundamentalMatrix( inv_K, R31, T31 );
+    }
+
+    //extern "C"
     int Trifocal_Views::getRandPermNum(std::vector<int>& v) {
         //> Credit: https://www.geeksforgeeks.org/generate-a-random-permutation-of-1-to-n/
         //> Size of the vector
@@ -350,6 +466,7 @@ namespace magmaHCWrapper {
         return num;
     }
 
+    //extern "C"
     void Trifocal_Views::generateRandPermIndices(int n, std::vector<int> & All_Indices) {
         //> Edited from: https://www.geeksforgeeks.org/generate-a-random-permutation-of-1-to-n/
         std::vector<int> v(n);

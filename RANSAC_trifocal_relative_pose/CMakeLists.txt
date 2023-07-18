@@ -12,7 +12,7 @@ set(CMAKE_CXX_FLAGS_DEBUG "-g -Wall" CACHE STRING "" FORCE)
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG -march=native" CACHE STRING "" FORCE)
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -ffast-math" CACHE STRING "" FORCE)
 
-project(MINUS)
+project(TrifocalRelativePose)
 
 # -- enable the use of cuda --
 option(USE_CUDA "Use CUDA" ON)
@@ -77,11 +77,7 @@ find_package(OpenMP REQUIRED)
 #endif()
 
 find_package(Eigen3 REQUIRED)
-
-include_directories(
-  ${EIGEN3_INCLUDE_DIR}
-)
-
+include_directories( ${EIGEN3_INCLUDE_DIR})
 
 #-------------------------------------------------------------------
 #-- BUILD CONFIG OPTIONS AND WARNINGS --
@@ -123,16 +119,16 @@ set(PROJ_INSTALL_INCLUDE_DIR ${CMAKE_INSTALL_PREFIX}/include/)
 
 # -- include necessary libraries in the commands / executables file --
 include_directories(${PROJ_INCLUDE_DIRS})
-#include_directories( "/users/cchien3/data/cchien3/magma-2.5.4/include" )
-#include_directories( "/users/cchien3/data/cchien3/magma-2.5.4/testing" )
-#include_directories( "/users/cchien3/data/cchien3/magma/control" )
-#include_directories( "/users/cchien3/data/cchien3/magma/magmablas" )
+include_directories( "/users/cchien3/data/cchien3/magma-2.5.4/include" )
+include_directories( "/users/cchien3/data/cchien3/magma-2.5.4/testing" )
+include_directories( "/users/cchien3/data/cchien3/magma/control" )
+include_directories( "/users/cchien3/data/cchien3/magma/magmablas" )
 
 # adds a test for Endianness and a global variable that should be useful for file format programming -MM
 include(TestBigEndian)
 TEST_BIG_ENDIAN(MY_BIG_ENDIAN)
 
 # main lib
-add_subdirectory(ransac_trifocal_relative_pose_solver)
+add_subdirectory( ransac_trifocal_relative_pose_solver )
 # commands / executables
 add_subdirectory(cmd)
