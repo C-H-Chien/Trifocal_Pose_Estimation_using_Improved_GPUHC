@@ -31,7 +31,7 @@ namespace HC_Data_Import {
     public:
         
         HC_Data_Reader(std::string);
-        bool Read_Start_System_Solutions(magmaFloatComplex* &h_startSols, magmaFloatComplex* &h_Track, magmaHCWrapper::Problem_Params* pp);
+        bool Read_Start_System_Solutions(magmaFloatComplex* &h_startSols, magmaFloatComplex* &h_Track, magmaHCWrapper::Problem_Params* pp, bool use_MB);
         bool Read_Start_System_Parameters(magmaFloatComplex* &h_startParams, magmaHCWrapper::Problem_Params* pp, bool need_to_pad_ONE);
         bool Read_Hx_Ht_Indices(magma_int_t* &h_Hx_idx, magma_int_t* &h_Ht_idx, magmaHCWrapper::Problem_Params* pp);
 

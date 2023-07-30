@@ -134,7 +134,7 @@ namespace magmaHCWrapper {
     float one_half_delta_t;
 
     //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-
+    //> Do multiple HC trackins for RANSAC_NUM_OF_ITERATIONS times
     for (int ri = 0; ri < RANSAC_NUM_OF_ITERATIONS; ri++) {
       magmaFloatComplex* d_track = d_Track_array[batchid + ri*batchCount];
       s_track[tx]                = d_track[tx];

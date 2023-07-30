@@ -9,13 +9,18 @@
 
 //> RANSAC
 #define OUTLIER_RATIO               (0.01)
-#define RANSAC_Number_Of_Iterations (2)
+#define RANSAC_Number_Of_Iterations (20)
 #define SAMPSON_ERROR_THRESH        (2)
 
 //> Returned Solution parameters
 #define WRITE_SOLUTION_TO_FILE       (1)
 #define IMAG_PART_TOL                (1e-5)             //> Imaginary part tolerance when picking real solutions
 #define RESIDUAL_TO_GT_TOL           (1e-3)             //> Residual tolerance of the solution to the ground truth
+
+//> For RANSAC Multiple Batches (MB)
+//> MULTIPLES_OF_BATCHCOUNT * MULTIPLES_OF_TRACKING_PER_WARP = RANSAC_Number_Of_Iterations
+#define MULTIPLES_OF_BATCHCOUNT        (20)
+#define MULTIPLES_OF_TRACKING_PER_WARP (1)
 
 //> Some Assertion Checks
 #define IS_SO3_DET_R_TOL            (1e-5)              //> Check whether a rotation matrix belongs to SO(3) group, i.e., det(R)=1

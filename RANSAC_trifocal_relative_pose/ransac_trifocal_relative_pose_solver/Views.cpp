@@ -247,8 +247,7 @@ namespace TrifocalViewsWrapper {
         //> Get the inverse of the calibration matrix
         inv_K = K.inverse();
 
-        if (DEBUG) std::cout << "Calibration matrix: " << K << std::endl;
-
+        //if (DEBUG) std::cout << "Calibration matrix: " << K << std::endl;
     }
 
     //extern "C"

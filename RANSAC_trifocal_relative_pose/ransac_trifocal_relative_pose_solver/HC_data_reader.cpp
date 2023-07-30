@@ -39,29 +39,37 @@ namespace HC_Data_Import {
         Ht_file_read_success       = false;
     }
 
-    bool HC_Data_Reader::Read_Start_System_Solutions(magmaFloatComplex* &h_startSols, magmaFloatComplex* &h_Track, magmaHCWrapper::Problem_Params* pp) 
+    bool HC_Data_Reader::Read_Start_System_Solutions( magmaFloatComplex* &h_startSols, magmaFloatComplex* &h_Track, 
+                                                      magmaHCWrapper::Problem_Params* pp, bool use_MB ) 
     {
-        std::string startSols_File_Path   = problem_FileName + "/start_sols.txt";
-        std::fstream startSols_file;
-        float s_real, s_imag;
+        int loop_end_for_startSols = ( use_MB ) ? MULTIPLES_OF_BATCHCOUNT : ( 1 );
+        //int loop_end_for_Track     = ( use_MB ) ? : RANSAC_Number_Of_Iterations;
+
         int d = 0, i = 0; 
-        startSols_file.open(startSols_File_Path, std::ios_base::in);
-        if (!startSols_file) { std::cerr << "problem start solutions file not existed!\n"; exit(1); }
-        else {
-            while (startSols_file >> s_real >> s_imag) {
-                (h_startSols + i * (pp->numOfVars+1))[d] = MAGMA_C_MAKE(s_real, s_imag);
-                if (d < pp->numOfVars-1) { d++; }
-                else {
-                    d = 0;
-                    i++;
+        float s_real, s_imag;
+        for (int mi = 0; mi < loop_end_for_startSols; mi++) {
+            std::string startSols_File_Path   = problem_FileName + "/start_sols.txt";
+            std::fstream startSols_file;
+            d = 0, i = 0; 
+            startSols_file.open(startSols_File_Path, std::ios_base::in);
+            if (!startSols_file) { std::cerr << "problem start solutions file not existed!\n"; exit(1); }
+            else {
+                while (startSols_file >> s_real >> s_imag) {
+                    (h_startSols + mi * (pp->numOfTracks * (pp->numOfVars+1)) + i * (pp->numOfVars+1))[d] = MAGMA_C_MAKE(s_real, s_imag);
+                    if (d < pp->numOfVars-1) { d++; }
+                    else {
+                        d = 0;
+                        i++;
+                    }
                 }
+                for(int k = 0; k < pp->numOfTracks; k++) {
+                    (h_startSols + mi * (pp->numOfTracks * (pp->numOfVars+1)) + k * (pp->numOfVars+1))[pp->numOfVars] = MAGMA_C_MAKE(1.0, 0.0);
+                }
+                assert( i == pp->numOfTracks * pp->numOfVars );
+                start_sols_read_success = true;
             }
-            for(int k = 0; k < pp->numOfTracks; k++) {
-                (h_startSols + k * (pp->numOfVars+1))[pp->numOfVars] = MAGMA_C_MAKE(1.0, 0.0);
-            }
-            assert( i == pp->numOfTracks * pp->numOfVars );
-            start_sols_read_success = true;
         }
+        
 
         for (int ri = 0; ri < RANSAC_Number_Of_Iterations; ri++) {
             d = 0, i = 0; 
