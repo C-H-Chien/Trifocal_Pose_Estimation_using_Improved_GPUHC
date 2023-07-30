@@ -5,6 +5,7 @@
 #include <iomanip>
 #include <chrono>
 #include <assert.h>
+#include <cassert>
 #include <string>
 // =======================================================================================================
 // main function
@@ -32,6 +33,7 @@
 #include "../ransac_trifocal_relative_pose_solver/definitions.h"
 #include "../ransac_trifocal_relative_pose_solver/HC_data_reader.hpp"
 #include "../ransac_trifocal_relative_pose_solver/RANSAC_System.hpp"
+#include "../ransac_trifocal_relative_pose_solver/RANSAC_System_MB.hpp"
 
 int main(int argc, char **argv) {
 
@@ -70,7 +72,9 @@ int main(int argc, char **argv) {
 
   std::cout << views.cam1.img_points_pixels.size() << std::endl;
 
-  
+  //> Assertion check for the deinitions variables
+  if( MULTIPLES_OF_BATCHCOUNT * MULTIPLES_OF_TRACKING_PER_WARP == RANSAC_Number_Of_Iterations ) {}
+  else { std::cout << "FAILURE: Argument parameters incorrect!" << std::endl; exit(1); }
 
   //> Files to be read
   std::string repo_root_dir = REPO_DIR;
@@ -84,7 +88,8 @@ int main(int argc, char **argv) {
   pp->define_problem_params(problem_filename, HC_problem);
 
   //> Initialize RANSAC Scheme
-  RANSAC_Estimator::RANSAC_System Solve_by_RANSAC( pp );
+  //RANSAC_Estimator::RANSAC_System Solve_by_RANSAC( pp );
+  RANSAC_Estimator::RANSAC_System_MB Solve_by_RANSAC( pp );
 
   //> Allocate necessary arrays
   Solve_by_RANSAC.Array_Memory_Allocations( pp, true );
@@ -96,7 +101,7 @@ int main(int argc, char **argv) {
   HC_Data_Import::HC_Data_Reader HC_Data_Reader(problem_filename);
 
   std::cout << "Reading data from files ..." << std::endl;
-  bool is_start_sols_loaded      = HC_Data_Reader.Read_Start_System_Solutions(   Solve_by_RANSAC.h_startSols, Solve_by_RANSAC.h_Track, pp );
+  bool is_start_sols_loaded      = HC_Data_Reader.Read_Start_System_Solutions(   Solve_by_RANSAC.h_startSols, Solve_by_RANSAC.h_Track, pp, true );
   bool is_start_params_loaded    = HC_Data_Reader.Read_Start_System_Parameters(  Solve_by_RANSAC.h_startParams,  pp, true );
   bool is_Jacob_eval_indx_loaded = HC_Data_Reader.Read_Hx_Ht_Indices( Solve_by_RANSAC.h_Hx_idx, Solve_by_RANSAC.h_Ht_idx, pp );
   bool read_success = is_start_sols_loaded & is_start_params_loaded & is_Jacob_eval_indx_loaded;

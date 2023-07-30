@@ -19,15 +19,19 @@ set ( control_sources
   RANSAC_System.cpp
   RANSAC_System.hpp
 
+  RANSAC_System_MB.cpp
+  RANSAC_System_MB.hpp
+
   #>  main gpu code
   Problem_Params.hpp
-  HC_Track_General_Problem.cpp
+  #HC_Track_General_Problem.cpp
   HC_Track_Chicago_Problem.cpp
 
   #>  magma kernels
   gpu_solver/gpu-kernels/magmaHC-kernels.h
   #gpu_solver/gpu-kernels/kernel_HC_Solver_trifocal_2op1p.cu
   gpu_solver/gpu-kernels/kernel_HC_Solver_trifocal_2op1p_direct_param_homotopy.cu
+  gpu_solver/gpu-kernels/kernel_HC_Solver_trifocal_2op1p_direct_param_homotopy_mb.cu
 
   #>  device function
   gpu_solver/gpu-dev-functions/dev-cgesv-batched-small.cuh
