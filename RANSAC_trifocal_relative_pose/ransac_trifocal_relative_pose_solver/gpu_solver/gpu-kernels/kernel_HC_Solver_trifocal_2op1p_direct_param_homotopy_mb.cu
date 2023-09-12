@@ -53,6 +53,8 @@
 #include "../gpu-dev-functions/dev-cgesv-batched-small.cuh"
 #include "../gpu-dev-functions/dev-get-new-data.cuh"
 
+#include "../../definitions.h"
+
 namespace magmaHCWrapper {
 
   template<int N, int num_of_params, int max_steps, int max_corr_steps, int predSuccessCount, 
@@ -187,6 +189,9 @@ namespace magmaHCWrapper {
           // ===================================================================
           if (!end_zone && fabs(1 - t0) <= (0.0500001)) {
             end_zone = true;
+
+            //> TEST!!!!!!!!!!!!!!!!!!!!!
+            //break;
           }
 
           if (end_zone) {
@@ -353,7 +358,7 @@ namespace magmaHCWrapper {
     dim3 grid(batchCount, 1, 1);
     cudaError_t e = cudaErrorInvalidValue;
 
-    std::cout << "batchCount = " << batchCount << std::endl;
+    //std::cout << "batchCount = " << batchCount << std::endl;
 
     //> declare the amount of shared memory for the use of the kernel
     magma_int_t shmem  = 0;
@@ -391,8 +396,9 @@ namespace magmaHCWrapper {
 
     //> launch the GPU kernel
     //> < Number of Unknowns, Number of Parameters, Maximal Steps, Number of correction steps, Number of steps to be successful, Don't care...>
+    //> LAST THREE ARGUMENTS: (int batchCount, int NUMBER_OF_BATCHES_MULTIPLES, int NUMBER_OF_TRACKINGS_PER_WARP)
     e = cudaLaunchKernel((void*)HC_solver_trifocal_2op1p_30_direct_param_homotopy_mb
-                         < 30, 33, 120, 5, 10, 8, 5, 40, 16, 6, 312, 2, 1 >, 
+                         < 30, 33, 100, 5, 10, 8, 5, 40, 16, 6, 312, MULTIPLES_OF_BATCHCOUNT, MULTIPLES_OF_TRACKING_PER_WARP >, 
                          grid, threads, kernel_args, shmem, my_queue->cuda_stream());
 
 

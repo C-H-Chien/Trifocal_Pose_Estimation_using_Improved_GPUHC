@@ -125,7 +125,7 @@ namespace RANSAC_Estimator {
         int p1_idx, p2_idx, p3_idx;
         srand (time(NULL));
         Number_Of_Points = views.cam1.img_points_meters.size();
-        std::cout << Number_Of_Points << std::endl;
+        //std::cout << Number_Of_Points << std::endl;
 
         std::cout << "Preparing target parameters ..." << std::endl;
         for (int ti = 0; ti < RANSAC_Number_Of_Iterations; ti++) {
@@ -214,7 +214,6 @@ namespace RANSAC_Estimator {
 
     void RANSAC_System_MB::Solve_Relative_Pose( magmaHCWrapper::Problem_Params* pp )
     {
-        
         gpu_time = magmaHCWrapper::kernel_HC_Solver_trifocal_2op1p_30_direct_param_homotopy_mb
                    (my_queue, ldda, N, pp->numOfParams, batchCount, d_startSols_array, d_Track_array, 
                     d_startParams, d_targetParams, d_cgesvA_array, d_cgesvB_array,
@@ -256,6 +255,8 @@ namespace RANSAC_Estimator {
 
                     //> Pick the solution if all the imaginary parts of the two relative rotations are small enough
                     if ( small_imag_part_counter == 6 ) {
+
+                        real_solution_hc_steps.push_back( MAGMA_C_IMAG((h_path_converge_flag + ri*batchCount)[bs]) );
 
                         //> First normalize the translation part
                         //> T21
@@ -377,7 +378,13 @@ namespace RANSAC_Estimator {
                 Maximal_Number_of_Inliers = Number_Of_Inliers;
                 Pose_Index_with_Maximal_Number_of_Inliers = si;
             }
-        } 
+
+            #if TEST_COLLECT_HC_STEPS
+            if ( Number_Of_Inliers == Number_Of_Points ) {
+                true_solution_hc_steps.push_back( real_solution_hc_steps[si] );
+            }
+            #endif
+        }
 
         //> Assign final RANSAC solution
         final_R21 = R21[ Pose_Index_with_Maximal_Number_of_Inliers ];
@@ -385,17 +392,20 @@ namespace RANSAC_Estimator {
         final_T21 = normalized_t21[ Pose_Index_with_Maximal_Number_of_Inliers ];
         final_T31 = normalized_t31[ Pose_Index_with_Maximal_Number_of_Inliers ];
 
-        std::cout << "> Maximal Number of inliers: " << Maximal_Number_of_Inliers << std::endl;
         std::cout << "> Pose Index: " << Pose_Index_with_Maximal_Number_of_Inliers << std::endl;
+        #if DEBUG
+        std::cout << "> Maximal Number of inliers: " << Maximal_Number_of_Inliers << std::endl;
+        
         std::cout << "> Pose with Maximal Number of Inliers: " << std::endl;
         std::cout << "> R21: " << std::endl << R21[Pose_Index_with_Maximal_Number_of_Inliers] << std::endl;
         std::cout << "> T21: " << std::endl << normalized_t21[Pose_Index_with_Maximal_Number_of_Inliers] << std::endl;
         std::cout << "> R31: " << std::endl << R31[Pose_Index_with_Maximal_Number_of_Inliers] << std::endl;
         std::cout << "> T31: " << std::endl << normalized_t31[Pose_Index_with_Maximal_Number_of_Inliers] << std::endl;
         std::cout << "> F21: " << std::endl << F21[Pose_Index_with_Maximal_Number_of_Inliers] << std::endl;
+        #endif
     }
 
-    void RANSAC_System_MB::Solution_Residual_From_GroundTruths( TrifocalViewsWrapper::Trifocal_Views views )
+    bool RANSAC_System_MB::Solution_Residual_From_GroundTruths( TrifocalViewsWrapper::Trifocal_Views views )
     {
         Eigen::Vector3d euler_ang_GT_21 = views.R21.eulerAngles(0, 1, 2);
         Eigen::Vector3d euler_ang_GT_31 = views.R31.eulerAngles(0, 1, 2);
@@ -404,8 +414,16 @@ namespace RANSAC_Estimator {
         Rotation_Residual = euler_ang_GT_21 - euler_ang_final_21;
         Translation_Residual = euler_ang_GT_31 - euler_ang_final_31;
 
+        #if DEBUG
         std::cout << "> Euler angles residual: " << std::endl << Rotation_Residual << std::endl;
         std::cout << "> Translation residual: " << std::endl << Translation_Residual << std::endl;
+        #endif
+
+        bool Find_True_Rotation    = (Rotation_Residual(0) < RESIDUAL_TO_GT_TOL) & (Rotation_Residual(1) < RESIDUAL_TO_GT_TOL) & (Rotation_Residual(2) < RESIDUAL_TO_GT_TOL);
+        bool Find_True_Translation = (Translation_Residual(0) < RESIDUAL_TO_GT_TOL) & (Translation_Residual(1) < RESIDUAL_TO_GT_TOL) & (Translation_Residual(2) < RESIDUAL_TO_GT_TOL);
+
+        //> return truw if both rotation and translation satisfy 
+        return Find_True_Rotation & Find_True_Translation;
     }
 
     void RANSAC_System_MB::Write_Solutions_To_Files( std::ofstream &GPUHC_Solution_File ) 

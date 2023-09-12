@@ -394,7 +394,7 @@ namespace RANSAC_Estimator {
         std::cout << "> F21: " << std::endl << F21[Pose_Index_with_Maximal_Number_of_Inliers] << std::endl;
     }
 
-    void RANSAC_System::Solution_Residual_From_GroundTruths( TrifocalViewsWrapper::Trifocal_Views views )
+    bool RANSAC_System::Solution_Residual_From_GroundTruths( TrifocalViewsWrapper::Trifocal_Views views )
     {
         Eigen::Vector3d euler_ang_GT_21 = views.R21.eulerAngles(0, 1, 2);
         Eigen::Vector3d euler_ang_GT_31 = views.R31.eulerAngles(0, 1, 2);
@@ -405,6 +405,9 @@ namespace RANSAC_Estimator {
 
         std::cout << "> Euler angles residual: " << std::endl << Rotation_Residual << std::endl;
         std::cout << "> Translation residual: " << std::endl << Translation_Residual << std::endl;
+
+        //> TODO
+        return 0;
     }
 
     void RANSAC_System::Write_Solutions_To_Files( std::ofstream &GPUHC_Solution_File ) 

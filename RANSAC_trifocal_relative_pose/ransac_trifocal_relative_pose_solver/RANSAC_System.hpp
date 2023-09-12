@@ -40,7 +40,7 @@ namespace RANSAC_Estimator {
         void Write_Solutions_To_Files( std::ofstream &GPUHC_Solution_File );
         void Transform_Solutions_To_Relative_Poses( TrifocalViewsWrapper::Trifocal_Views views );
         void Find_Solution_With_Maximal_Inliers( TrifocalViewsWrapper::Trifocal_Views views );
-        void Solution_Residual_From_GroundTruths( TrifocalViewsWrapper::Trifocal_Views views );
+        bool Solution_Residual_From_GroundTruths( TrifocalViewsWrapper::Trifocal_Views views );
         void Free_Memories();
 
         //void RANSAC_Relative_Pose_by_

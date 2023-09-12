@@ -252,10 +252,23 @@ namespace TrifocalViewsWrapper {
 
     //extern "C"
     void Trifocal_Views::Add_Noise_to_Points_on_Curves() {
-        //> Set Perturbations for Inliers
-        std::default_random_engine generator(1);
-        std::normal_distribution<double> Noise_Distribution_On_Inliers(0, 0.5);
-        std::normal_distribution<double> Noise_Distribution_On_Outliers(0, 150);
+        //> Random number generator credit: https://en.cppreference.com/w/cpp/numeric/random
+        //> Seed with a real random value, if available
+        std::random_device r;
+
+        //> Set Perturbations
+        //std::default_random_engine generator_pts(1);
+        //std::default_random_engine generator_ore(1);
+        //std::default_random_engine generator_pts( r() );
+        //std::default_random_engine generator_ore( r() );
+
+        //> For point positions
+        std::normal_distribution<double> Noise_Distribution_On_Point_Inliers(0, NOISE_DISTRIBUTION_STD_INLIERS_POINTS);
+        std::normal_distribution<double> Noise_Distribution_On_Point_Outliers(0, NOISE_DISTRIBUTION_STD_OUTLIERS_POINTS);
+
+        //> For tangent orientations
+        std::normal_distribution<double> Noise_Distribution_On_Tangent_Inliers(0, NOISE_DISTRIBUTION_STD_INLIERS_TANGENTS);
+        std::normal_distribution<double> Noise_Distribution_On_Tangent_Outliers(0, NOISE_DISTRIBUTION_STD_OUTLIERS_TANGENTS);
         std::uniform_int_distribution<int> theta(-10000, 10000);
 
         //> Create sizes for the vector structures
@@ -276,8 +289,8 @@ namespace TrifocalViewsWrapper {
         //> List of Indices Indicating whether the point index is an outlier or not
         //> Note: Variable-sized Array Must Be Initialized Properly 
         bool Boolean_Outlier_Indices[Number_Of_Points];
-        std::fill_n (Boolean_Outlier_Indices, Number_Of_Points, false);
-        //memcpy(Boolean_Outlier_Indices, (bool[]){ false }, sizeof(Boolean_Outlier_Indices));
+        std::fill_n (Boolean_Outlier_Indices, Number_Of_Points, false);     //> Make all false
+
         for (int oi = 0; oi < Number_Of_Outliers; oi++) { 
             int indx = All_Points_Indices[oi];
             Boolean_Outlier_Indices[indx] = true;
@@ -286,8 +299,8 @@ namespace TrifocalViewsWrapper {
 
         //> Perturb All Points on Curve 1 Across All Views
         //> TODO: Make sure that the perturbed points are withing view boundaries
-        //> TODO: Make sure that the tangents are also perturbed
         double Inlier_Mag, Outlier_Mag, angle;
+        double Inlier_Tangent_Ore, Outlier_Tangent_Ore;
         int outlier_counter = 0;
         bool is_outlier;
         for (int pi = 0; pi < Number_Of_Points; pi++) {
@@ -298,10 +311,20 @@ namespace TrifocalViewsWrapper {
             //> Perturb both inlier and outliers for each view individually so that the pertubation are not the same across all views
             //> 1) View 1
             if (is_outlier) {
-                Outlier_Mag = Noise_Distribution_On_Outliers(generator);
-                angle =  M_PI * (theta(generator) / 10000.0);
+                std::default_random_engine generator_pts( r() );
+                std::default_random_engine generator_ore( r() );
+
+                //> Point position perturbation
+                Outlier_Mag = Noise_Distribution_On_Point_Outliers(generator_pts);
+                angle =  M_PI * (theta(generator_pts) / 10000.0);
                 cam1.img_perturbed_points_pixels[pi]   = cam1.img_points_pixels[pi] + Eigen::Vector2d(Outlier_Mag*cos(angle), Outlier_Mag*sin(angle));
-                cam1.img_perturbed_tangents_pixels[pi] = cam1.img_tangents_pixels[pi];
+                //cam1.img_perturbed_tangents_pixels[pi] = cam1.img_tangents_pixels[pi];
+
+                //> Point tangent perturbation
+                double orientation_deg = atan ( cam1.img_tangents_pixels[pi](1) / cam1.img_tangents_pixels[pi](0) ) * 180.0 / M_PI;
+                orientation_deg += Noise_Distribution_On_Tangent_Outliers(generator_ore);
+                double orientation_rad = orientation_deg * M_PI / 180.0;
+                cam1.img_perturbed_tangents_pixels[pi] = Eigen::Vector2d{ cos(orientation_rad), sin(orientation_rad) };
 
                 /*if (outlier_counter < 10) {
                     std::cout << "O: (" << cam1.img_points_pixels[pi](0) << ", " << cam1.img_points_pixels[pi](1) << ") -> (";
@@ -309,10 +332,20 @@ namespace TrifocalViewsWrapper {
                 }*/
             }
             else {
-                Inlier_Mag  = Noise_Distribution_On_Inliers(generator);
-                angle =  M_PI * (theta(generator) / 10000.0);
+                std::default_random_engine generator_pts( r() );
+                std::default_random_engine generator_ore( r() );
+
+                //> Point position perturbation
+                Inlier_Mag         = Noise_Distribution_On_Point_Inliers(generator_pts);
+                angle =  M_PI * (theta(generator_pts) / 10000.0);
                 cam1.img_perturbed_points_pixels[pi]   = cam1.img_points_pixels[pi] + Eigen::Vector2d(Inlier_Mag*cos(angle), Inlier_Mag*sin(angle));
-                cam1.img_perturbed_tangents_pixels[pi] = cam1.img_tangents_pixels[pi];
+                
+                //> Point tangent perturbation
+                double orientation_deg = atan ( cam1.img_tangents_pixels[pi](1) / cam1.img_tangents_pixels[pi](0) ) * 180.0 / M_PI;
+                orientation_deg += Noise_Distribution_On_Tangent_Inliers(generator_ore);
+                double orientation_rad = orientation_deg * M_PI / 180.0;
+                cam1.img_perturbed_tangents_pixels[pi] = Eigen::Vector2d{ cos(orientation_rad), sin(orientation_rad) };
+                //cam1.img_perturbed_tangents_pixels[pi] = cam1.img_tangents_pixels[pi];
 
                 if (pi < 10) {
                     std::cout << "I: (" << cam1.img_points_pixels[pi](0) << ", " << cam1.img_points_pixels[pi](1) << ") -> (";
@@ -322,31 +355,73 @@ namespace TrifocalViewsWrapper {
 
             //> 2) View 2
             if (is_outlier) {
-                Outlier_Mag = Noise_Distribution_On_Outliers(generator);
-                angle =  M_PI * (theta(generator) / 10000.0);
+                std::default_random_engine generator_pts( r() );
+                std::default_random_engine generator_ore( r() );
+
+                //> Point position perturbation
+                Outlier_Mag = Noise_Distribution_On_Point_Outliers(generator_pts);
+                angle =  M_PI * (theta(generator_pts) / 10000.0);
                 cam2.img_perturbed_points_pixels[pi]   = cam2.img_points_pixels[pi] + Eigen::Vector2d(Outlier_Mag*cos(angle), Outlier_Mag*sin(angle));
-                cam2.img_perturbed_tangents_pixels[pi] = cam2.img_tangents_pixels[pi];
+                
+                //> Point tangent perturbation
+                //cam2.img_perturbed_tangents_pixels[pi] = cam2.img_tangents_pixels[pi];
+                double orientation_deg = atan ( cam2.img_tangents_pixels[pi](1) / cam2.img_tangents_pixels[pi](0) ) * 180.0 / M_PI;
+                orientation_deg += Noise_Distribution_On_Tangent_Outliers(generator_ore);
+                double orientation_rad = orientation_deg * M_PI / 180.0;
+                cam2.img_perturbed_tangents_pixels[pi] = Eigen::Vector2d{ cos(orientation_rad), sin(orientation_rad) };
             }
             else {
-                Inlier_Mag  = Noise_Distribution_On_Inliers(generator);
-                angle =  M_PI * (theta(generator) / 10000.0);
+                std::default_random_engine generator_pts( r() );
+                std::default_random_engine generator_ore( r() );
+
+                //> Point position perturbation
+                Inlier_Mag  = Noise_Distribution_On_Point_Inliers(generator_pts);
+                angle =  M_PI * (theta(generator_pts) / 10000.0);
                 cam2.img_perturbed_points_pixels[pi]   = cam2.img_points_pixels[pi] + Eigen::Vector2d(Inlier_Mag*cos(angle), Inlier_Mag*sin(angle));
-                cam2.img_perturbed_tangents_pixels[pi] = cam2.img_tangents_pixels[pi];
+                
+                //> Point tangent perturbation
+                //cam2.img_perturbed_tangents_pixels[pi] = cam2.img_tangents_pixels[pi];
+                double orientation_deg = atan ( cam2.img_tangents_pixels[pi](1) / cam2.img_tangents_pixels[pi](0) ) * 180.0 / M_PI;
+                orientation_deg += Noise_Distribution_On_Tangent_Inliers(generator_ore);
+                double orientation_rad = orientation_deg * M_PI / 180.0;
+                cam2.img_perturbed_tangents_pixels[pi] = Eigen::Vector2d{ cos(orientation_rad), sin(orientation_rad) };
             }
 
             //> 2) View 3
             if (is_outlier) {
-                Outlier_Mag = Noise_Distribution_On_Outliers(generator);
-                angle =  M_PI * (theta(generator) / 10000.0);
+                std::default_random_engine generator_pts( r() );
+                std::default_random_engine generator_ore( r() );
+
+                //> Point position perturbation
+                Outlier_Mag = Noise_Distribution_On_Point_Outliers(generator_pts);
+                angle =  M_PI * (theta(generator_pts) / 10000.0);
                 cam3.img_perturbed_points_pixels[pi]   = cam3.img_points_pixels[pi] + Eigen::Vector2d(Outlier_Mag*cos(angle), Outlier_Mag*sin(angle));
-                cam3.img_perturbed_tangents_pixels[pi] = cam3.img_tangents_pixels[pi];
+                
+                //> Point tangent perturbation
+                double orientation_deg = atan ( cam3.img_tangents_pixels[pi](1) / cam3.img_tangents_pixels[pi](0) ) * 180.0 / M_PI;
+                orientation_deg += Noise_Distribution_On_Tangent_Outliers(generator_ore);
+                double orientation_rad = orientation_deg * M_PI / 180.0;
+                cam3.img_perturbed_tangents_pixels[pi] = Eigen::Vector2d{ cos(orientation_rad), sin(orientation_rad) };
+                //cam3.img_perturbed_tangents_pixels[pi] = cam3.img_tangents_pixels[pi];
+                
                 outlier_counter++;
             }
             else {
-                Inlier_Mag  = Noise_Distribution_On_Inliers(generator);
-                angle =  M_PI * (theta(generator) / 10000.0);
+                std::default_random_engine generator_pts( r() );
+                std::default_random_engine generator_ore( r() );
+
+                //> Point position perturbation
+                Inlier_Mag  = Noise_Distribution_On_Point_Inliers(generator_pts);
+                angle =  M_PI * (theta(generator_pts) / 10000.0);
                 cam3.img_perturbed_points_pixels[pi]   = cam3.img_points_pixels[pi] + Eigen::Vector2d(Inlier_Mag*cos(angle), Inlier_Mag*sin(angle));
                 cam3.img_perturbed_tangents_pixels[pi] = cam3.img_tangents_pixels[pi];
+
+                //> Point tangent perturbation
+                //cam2.img_perturbed_tangents_pixels[pi] = cam2.img_tangents_pixels[pi];
+                double orientation_deg = atan ( cam3.img_tangents_pixels[pi](1) / cam3.img_tangents_pixels[pi](0) ) * 180.0 / M_PI;
+                orientation_deg += Noise_Distribution_On_Tangent_Inliers(generator_ore);
+                double orientation_rad = orientation_deg * M_PI / 180.0;
+                cam3.img_perturbed_tangents_pixels[pi] = Eigen::Vector2d{ cos(orientation_rad), sin(orientation_rad) };
             }
         }
     }

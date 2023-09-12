@@ -42,6 +42,10 @@ set ( control_sources
   #>  p2c constant matrix
   gpu_solver/polys_params2coeffs/p2c_trifocal_2op1p_30.h
 
+  #> Test files
+  Files_for_TEST.hpp
+  Files_for_TEST.cpp
+
 )
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
