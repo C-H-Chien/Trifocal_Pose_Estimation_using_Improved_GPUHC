@@ -32,7 +32,7 @@
 
 #include "../ransac_trifocal_relative_pose_solver/definitions.h"
 #include "../ransac_trifocal_relative_pose_solver/HC_data_reader.hpp"
-#include "../ransac_trifocal_relative_pose_solver/RANSAC_System.hpp"
+//#include "../ransac_trifocal_relative_pose_solver/RANSAC_System.hpp"
 #include "../ransac_trifocal_relative_pose_solver/RANSAC_System_MB.hpp"
 #include "../ransac_trifocal_relative_pose_solver/Files_for_TEST.hpp"
 
@@ -129,12 +129,14 @@ int main(int argc, char **argv) {
 
     Solve_by_RANSAC.Transfer_Data_From_GPU_to_CPU();
 
+    #if TEST_BLOCK_CYCLE_TIME
+    Solve_by_RANSAC.Push_Block_Cycle_Time();
+    #else
     Solve_by_RANSAC.Transform_Solutions_To_Relative_Poses( views );
-
     Solve_by_RANSAC.Find_Solution_With_Maximal_Inliers( views );
-
     bool is_True_Solution_Found = Solve_by_RANSAC.Solution_Residual_From_GroundTruths( views );
     if (is_True_Solution_Found) find_true_solution_counter++;
+    #endif
 
     #if WRITE_SOLUTION_TO_FILE
     //> Write converged HC track solutions to files
@@ -151,9 +153,20 @@ int main(int argc, char **argv) {
     Write_Test_Data_to_Files.write_true_solution_HC_steps( Solve_by_RANSAC.true_solution_hc_steps );
     #endif 
 
+    #if TEST_ALL_POSITIVE_DEPTHS_AT_END_ZONE
+    Write_Test_Data_to_Files.write_time_when_depths_are_positive( Solve_by_RANSAC.t_when_depths_are_positive_for_actual_sol );
+    #endif
+
+    #if TEST_BLOCK_CYCLE_TIME
+    Write_Test_Data_to_Files.write_block_cycle_times( Solve_by_RANSAC.all_Block_Cycle_Times );
+    #endif
+
     Solve_by_RANSAC.Free_Memories();
   }
 
+  #if TEST_BLOCK_CYCLE_TIME
+  std::cout << "Finish timing the block cycles!" << std::endl;
+  #else
   //> Show multiple times results
   if (TOTAL_TEST_TIMES > 0) {
     std::cout << "======================== INFORMATION ==========================" << std::endl;
@@ -166,6 +179,7 @@ int main(int argc, char **argv) {
     std::cout << "> Average Time Cost (ms):         " << ((double)gpu_time_accumulation / (double)TOTAL_TEST_TIMES)*1000 << std::endl;
     std::cout << "> Max/Min Time Cost (ms):         " << max_gpu_time*1000 << " / " << min_gpu_time*1000 << std::endl;
   }
+  #endif
   
   Write_Test_Data_to_Files.close_all_files();
 

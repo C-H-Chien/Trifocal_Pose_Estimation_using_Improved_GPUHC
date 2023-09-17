@@ -1,5 +1,5 @@
-#ifndef kernel_HC_Solver_trifocal_2op1p_30_direct_param_homotopy_cu
-#define kernel_HC_Solver_trifocal_2op1p_30_direct_param_homotopy_cu
+#ifndef kernel_HC_Solver_trifocal_2op1p_30_direct_param_homotopy_cycle_timing_cu
+#define kernel_HC_Solver_trifocal_2op1p_30_direct_param_homotopy_cycle_timing_cu
 // ============================================================================
 // GPU homotopy continuation solver for the trifocal 2op1p 30x30 problem
 // Version 2: Direct evaluation of parameter homotopy. The parameter homotopy 
@@ -14,6 +14,8 @@
 // Major Modifications
 //    Chiang-Heng Chien  22-10-03:   Edited from the first version 
 //                                   (kernel_HC_Solver_trifocal_2op1p_30.cu)
+//    Chiang-Heng Chien  23-07-18:   Run under a RANSAC scheme with multiple 
+//                                   batches and multiple HC trackins per warp
 //
 // ============================================================================
 #include <stdio.h>
@@ -43,9 +45,6 @@
 #undef min
 #include "batched_kernel_param.h"
 
-//> Macros
-//#include "../../definitions.h"
-
 //> header
 #include "magmaHC-kernels.h"
 
@@ -54,13 +53,15 @@
 #include "../gpu-dev-functions/dev-cgesv-batched-small.cuh"
 #include "../gpu-dev-functions/dev-get-new-data.cuh"
 
+#include "../../definitions.h"
+
 namespace magmaHCWrapper {
 
   template<int N, int num_of_params, int max_steps, int max_corr_steps, int predSuccessCount, 
            int Hx_max_terms, int Hx_max_parts, int Hx_max_terms_parts, int Ht_max_terms, int Ht_max_parts,
-           int batchCount, int RANSAC_NUM_OF_ITERATIONS>
+           int batchCount, int NUMBER_OF_BATCHES_MULTIPLES, int NUMBER_OF_TRACKINGS_PER_WARP>
   __global__ void
-  HC_solver_trifocal_2op1p_30_direct_param_homotopy(
+  HC_solver_trifocal_2op1p_30_direct_param_homotopy_cycle_timing(
     magma_int_t ldda, 
     magmaFloatComplex** d_startSols_array,
     magmaFloatComplex** d_Track_array,
@@ -71,7 +72,8 @@ namespace magmaHCWrapper {
     magmaFloatComplex*  d_diffParams,
     const magma_int_t* __restrict__ d_Hx_indices,
     const magma_int_t* __restrict__ d_Ht_indices,
-    magmaFloatComplex*  d_path_converge_flag
+    magmaFloatComplex*  d_path_converge_flag,
+    long long *clocks
   )
   {
     extern __shared__ magmaFloatComplex zdata[];
@@ -132,14 +134,15 @@ namespace magmaHCWrapper {
 
     //> 1/2 \Delta t
     float one_half_delta_t;
+    bool inf_failed = false;
 
     //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    //> Do multiple HC trackins for RANSAC_NUM_OF_ITERATIONS times
-    for (int ri = 0; ri < RANSAC_NUM_OF_ITERATIONS; ri++) {
-      magmaFloatComplex* d_track = d_Track_array[batchid + ri*batchCount];
+    int batch_mul_id = batchid / batchCount;
+    for (int ri = 0; ri < NUMBER_OF_TRACKINGS_PER_WARP; ri++) {
+      magmaFloatComplex* d_track = d_Track_array[batchid + ri*batchCount*NUMBER_OF_BATCHES_MULTIPLES];
       s_track[tx]                = d_track[tx];
-      s_targetParams[tx]         = d_targetParams[tx + ri*(num_of_params+1)];
-      s_diffParams[tx]           = d_diffParams[tx + ri*(num_of_params+1)];
+      s_targetParams[tx]         = d_targetParams[tx + batch_mul_id * (num_of_params+1) + ri * NUMBER_OF_BATCHES_MULTIPLES * (num_of_params+1)];
+      s_diffParams[tx]           = d_diffParams[tx + batch_mul_id * (num_of_params+1) + ri * NUMBER_OF_BATCHES_MULTIPLES * (num_of_params+1)];
 
       s_sols[tx]               = d_startSols[tx];
       s_track_last_success[tx] = s_track[tx];
@@ -161,25 +164,13 @@ namespace magmaHCWrapper {
       }
 
       //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-      /*if (tx == 0 && batchid == 1) {
-        printf("Round #%d\n", ri);
-        for (int ii = 0; ii < 31; ii++) {
-          printf("%.5f\t%.5f\n", MAGMA_C_REAL(s_track[ii]), MAGMA_C_IMAG(s_track[ii]));
-        }
-        printf("\n");
-      }
-
-      if (tx == 0 && batchid == 1) {
-        printf("Round #%d\n", ri);
-        for (int ii = 0; ii < 34; ii++) {
-          printf("%.5f\t%.5f\n", MAGMA_C_REAL(s_targetParams[ii]), MAGMA_C_IMAG(s_targetParams[ii]));
-        }
-        printf("\n");
-      }*/
-
-      //#pragma unroll
+      long long start;
+      start = clock64();
       for (int step = 0; step <= max_steps; step++) {
         if (t0 < 1.0 && (1.0-t0 > 0.0000001)) {
+
+          //> KEY BREAK for specific t0
+          //if (t0 > 0.95) break;
 
           // ===================================================================
           // Decide delta t at end zone
@@ -287,7 +278,7 @@ namespace magmaHCWrapper {
 
           //> stop if the values of the solution is too large
           if ((s_norm[1] > 1e14) && (t0 < 1.0) && (1.0-t0 > 0.001)) {
-            //inf_failed = 1;
+            inf_failed = 1;
             break;
           }
 
@@ -320,16 +311,19 @@ namespace magmaHCWrapper {
         }
       }
 
+      //> TEST!!!!!!!!!!!!!!!!!!!!!
+      clocks[batchid + ri*batchCount] = (inf_failed) ? -2 : (clock64() - start);
+
       //> d_cgesvB tells whether the track is finished, if not, stores t0 and delta_t
       d_path_converge_flag[batchid + ri*batchCount] = (t0 >= 1.0 || (1.0-t0 <= 0.0000001)) ? MAGMA_C_MAKE(1.0, hc_step) : MAGMA_C_MAKE(t0, delta_t);
-
+      
       //> d_track stores the solutions
       d_track[tx] = s_track[tx];
     }
   }
 
   extern "C" real_Double_t
-  kernel_HC_Solver_trifocal_2op1p_30_direct_param_homotopy(
+  kernel_HC_Solver_trifocal_2op1p_30_direct_param_homotopy_cycle_timing(
     magma_queue_t my_queue,
     magma_int_t ldda,
     magma_int_t N, 
@@ -344,13 +338,16 @@ namespace magmaHCWrapper {
     magmaFloatComplex*  d_diffParams, //
     magma_int_t* d_Hx_indx, 
     magma_int_t* d_Ht_indx,
-    magmaFloatComplex*  d_path_converge_flag)
+    magmaFloatComplex*  d_path_converge_flag,
+    long long *clocks)
   {
     real_Double_t gpu_time;
     const magma_int_t thread_x = N;
     dim3 threads(thread_x, 1, 1);
     dim3 grid(batchCount, 1, 1);
     cudaError_t e = cudaErrorInvalidValue;
+
+    //std::cout << "batchCount = " << batchCount << std::endl;
 
     //> declare the amount of shared memory for the use of the kernel
     magma_int_t shmem  = 0;
@@ -379,15 +376,19 @@ namespace magmaHCWrapper {
                            &d_cgesvA_array, &d_cgesvB_array,
                            &d_diffParams,
                            &d_Hx_indx, &d_Ht_indx,
-                           &d_path_converge_flag
+                           &d_path_converge_flag,
+                           &clocks
                           };
 
     gpu_time = magma_sync_wtime( my_queue );
 
+    //int batchCount, int NUMBER_OF_BATCHES_MULTIPLES, int NUMBER_OF_TRACKINGS_PER_WARP>
+
     //> launch the GPU kernel
     //> < Number of Unknowns, Number of Parameters, Maximal Steps, Number of correction steps, Number of steps to be successful, Don't care...>
-    e = cudaLaunchKernel((void*)HC_solver_trifocal_2op1p_30_direct_param_homotopy
-                         < 30, 33, 150, 5, 10, 8, 5, 40, 16, 6, 312, 2 >, 
+    //> LAST THREE ARGUMENTS: (int batchCount, int NUMBER_OF_BATCHES_MULTIPLES, int NUMBER_OF_TRACKINGS_PER_WARP)
+    e = cudaLaunchKernel((void*)HC_solver_trifocal_2op1p_30_direct_param_homotopy_cycle_timing
+                         < 30, 33, MAXIMAL_HC_STEPS, NUM_OF_CORRECTION_STEPS, NUM_OF_STEPS_TO_BE_SUCCESSFUL, 8, 5, 40, 16, 6, 312, MULTIPLES_OF_BATCHCOUNT, MULTIPLES_OF_TRACKING_PER_WARP >, 
                          grid, threads, kernel_args, shmem, my_queue->cuda_stream());
 
 

@@ -16,8 +16,8 @@ set ( control_sources
   util.cpp
 
   #> RANSAC Scheme
-  RANSAC_System.cpp
-  RANSAC_System.hpp
+  #RANSAC_System.cpp
+  #RANSAC_System.hpp
 
   RANSAC_System_MB.cpp
   RANSAC_System_MB.hpp
@@ -29,9 +29,9 @@ set ( control_sources
 
   #>  magma kernels
   gpu_solver/gpu-kernels/magmaHC-kernels.h
-  #gpu_solver/gpu-kernels/kernel_HC_Solver_trifocal_2op1p.cu
-  gpu_solver/gpu-kernels/kernel_HC_Solver_trifocal_2op1p_direct_param_homotopy.cu
+  # gpu_solver/gpu-kernels/kernel_HC_Solver_trifocal_2op1p_direct_param_homotopy.cu
   gpu_solver/gpu-kernels/kernel_HC_Solver_trifocal_2op1p_direct_param_homotopy_mb.cu
+  gpu_solver/gpu-kernels/kernel_HC_Solver_trifocal_2op1p_direct_param_homotopy_cycle_timing.cu
 
   #>  device function
   gpu_solver/gpu-dev-functions/dev-cgesv-batched-small.cuh

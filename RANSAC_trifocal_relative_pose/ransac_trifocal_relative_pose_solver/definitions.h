@@ -8,29 +8,38 @@
 #define REPO_DIR                   std::string("/oscar/data/bkimia/cchien3/Trifocal_Relative_Pose_Estimator/")
 
 //> RANSAC
-#define OUTLIER_RATIO               (0.3)     //> Must be within [0, 1]
-#define RANSAC_Number_Of_Iterations (20)
+#define OUTLIER_RATIO               (0.0)     //> Must be within [0, 1]
+#define RANSAC_Number_Of_Iterations (40)
 #define SAMPSON_ERROR_THRESH        (2)
 
+//> For RANSAC Multiple Batches (MB)
+//> MULTIPLES_OF_BATCHCOUNT * MULTIPLES_OF_TRACKING_PER_WARP = RANSAC_Number_Of_Iterations
+#define MULTIPLES_OF_BATCHCOUNT        (40)
+#define MULTIPLES_OF_TRACKING_PER_WARP (1)
+
 //> Noise applied to synthetic data for both points and tangents
-#define NOISE_DISTRIBUTION_STD_INLIERS_POINTS   (0.0)
-#define NOISE_DISTRIBUTION_STD_OUTLIERS_POINTS  (150)
+#define NOISE_DISTRIBUTION_STD_INLIERS_POINTS     (0.0)
+#define NOISE_DISTRIBUTION_STD_OUTLIERS_POINTS    (150)
 #define NOISE_DISTRIBUTION_STD_INLIERS_TANGENTS   (0.0)
 #define NOISE_DISTRIBUTION_STD_OUTLIERS_TANGENTS  (90.0)
 
 //> Returned Solution parameters
-#define WRITE_SOLUTION_TO_FILE       (0)
-#define IMAG_PART_TOL                (1e-5)             //> Imaginary part tolerance when picking real solutions
-#define RESIDUAL_TO_GT_TOL           (1e-4)             //> Residual tolerance of the solution to the ground truth
+#define WRITE_SOLUTION_TO_FILE                    (0)
+#define IMAG_PART_TOL                             (1e-5)          //> Imaginary part tolerance when picking real solutions
+#define ROTATION_RESIDUAL_TO_GT_DEG_TOL           (1)             //> Residual tolerance of the roation to the ground truth (in degree)
+#define TRANSLATION_RESIDUAL_TO_GT_TOL            (0.5)           //> Residual tolerance of the translation to the ground truth
 
-//> For RANSAC Multiple Batches (MB)
-//> MULTIPLES_OF_BATCHCOUNT * MULTIPLES_OF_TRACKING_PER_WARP = RANSAC_Number_Of_Iterations
-#define MULTIPLES_OF_BATCHCOUNT        (20)
-#define MULTIPLES_OF_TRACKING_PER_WARP (1)
+//> GPU KERNELS
+#define MAXIMAL_HC_STEPS               (100) 
+#define NUM_OF_CORRECTION_STEPS        (4)
+#define NUM_OF_STEPS_TO_BE_SUCCESSFUL  (5)
+#define IMAG_PART_TOL_FOR_EARLY_STOP   (1e-2)
 
 //> Some TESTINGS
-#define TOTAL_TEST_TIMES            (100)   //> TEST repeated times, simulating number of RANSAC iterations
-#define TEST_COLLECT_HC_STEPS       (1)
+#define TOTAL_TEST_TIMES                        (100)   //> TEST: repeated times, simulating how many relative pose estimation needs to be computed
+#define TEST_BLOCK_CYCLE_TIME                   (false)
+#define TEST_COLLECT_HC_STEPS                   (false)
+#define TEST_ALL_POSITIVE_DEPTHS_AT_END_ZONE    (true)
 
 //> Some Assertion Checks
 #define IS_SO3_DET_R_TOL            (1e-5)              //> Check whether a rotation matrix belongs to SO(3) group, i.e., det(R)=1

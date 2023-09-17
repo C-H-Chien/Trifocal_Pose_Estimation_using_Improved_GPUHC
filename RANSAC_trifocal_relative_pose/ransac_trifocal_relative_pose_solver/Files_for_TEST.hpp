@@ -35,12 +35,17 @@ namespace TEST_WITH_WRITTEN_FILES {
         
         void write_true_solution_HC_steps( std::vector<int> true_solution_hc_steps );
 
+        void write_time_when_depths_are_positive( std::vector<float> time_cue );
+
+        void write_block_cycle_times( std::vector<float> block_cycle_times );
+
         void close_all_files();
 
     private:
 
         std::ofstream HC_Steps_File;
-        
+        std::ofstream Positive_Depths_File;
+        std::ofstream Block_Cycle_Times_File;
     };
 
 }

@@ -30,6 +30,9 @@
 #include "util.hpp"
 #include "./gpu_solver/gpu-kernels/magmaHC-kernels.h"
 
+#include <cuda.h>
+#include <cuda_runtime.h>
+
 #include "magma_v2.h"
 #include "magma_lapack.h"
 #include "magma_internal.h"
@@ -52,6 +55,9 @@ namespace RANSAC_Estimator {
 
         magma_getdevice( &cdev );
         magma_queue_create( cdev, &my_queue ); 
+
+        peak_clk = 1;	       // measure clock time
+        err = cudaDeviceGetAttribute(&peak_clk, cudaDevAttrClockRate, cdev);
 
         ldda = magma_roundup( N, 32 );  // multiple of 32 by default
         lddb = ldda;
@@ -116,7 +122,12 @@ namespace RANSAC_Estimator {
         //> Random initialization for h_cgesvA and h_cgesvB (doesn't matter the value)
         magma_int_t ISEED[4] = {0,0,0,1};
         lapackf77_clarnv( &ione, ISEED, &sizeA, h_cgesvA );
-        lapackf77_clarnv( &ione, ISEED, &sizeB, h_cgesvB );        
+        lapackf77_clarnv( &ione, ISEED, &sizeB, h_cgesvB );
+
+        #if TEST_BLOCK_CYCLE_TIME
+        host_clk_data   = (long long *)malloc(batchCount*sizeof(long long));
+        err             = cudaMalloc(&clk_data, batchCount*sizeof(long long));
+        #endif
     }
 
     void RANSAC_System_MB::Prepare_Target_Params( TrifocalViewsWrapper::Trifocal_Views views, magmaHCWrapper::Problem_Params* pp )
@@ -172,9 +183,9 @@ namespace RANSAC_Estimator {
             (h_targetParams + ti*(pp->numOfParams+1))[28] = MAGMA_C_MAKE(views.cam3.img_tangents_meters[p2_idx](0), 0.0);
             (h_targetParams + ti*(pp->numOfParams+1))[29] = MAGMA_C_MAKE(views.cam3.img_tangents_meters[p2_idx](1), 0.0);
 
-            (h_targetParams + ti*(pp->numOfParams+1))[30] = MAGMA_C_MAKE(100.0, 0.0);
-            (h_targetParams + ti*(pp->numOfParams+1))[31] = MAGMA_C_MAKE(10.0, 0.0);
-            (h_targetParams + ti*(pp->numOfParams+1))[32] = MAGMA_C_MAKE(10.0, 0.0);
+            (h_targetParams + ti*(pp->numOfParams+1))[30] = MAGMA_C_MAKE(1.0, 0.0);
+            (h_targetParams + ti*(pp->numOfParams+1))[31] = MAGMA_C_MAKE(1.0, 0.0);
+            (h_targetParams + ti*(pp->numOfParams+1))[32] = MAGMA_C_MAKE(1.0, 0.0);
 
             (h_targetParams + ti*(pp->numOfParams+1))[33] = MAGMA_C_MAKE(1.0, 0.0);
 
@@ -214,10 +225,18 @@ namespace RANSAC_Estimator {
 
     void RANSAC_System_MB::Solve_Relative_Pose( magmaHCWrapper::Problem_Params* pp )
     {
+        #if TEST_BLOCK_CYCLE_TIME
+        gpu_time = magmaHCWrapper::kernel_HC_Solver_trifocal_2op1p_30_direct_param_homotopy_cycle_timing
+                   (my_queue, ldda, N, pp->numOfParams, batchCount, d_startSols_array, d_Track_array, 
+                    d_startParams, d_targetParams, d_cgesvA_array, d_cgesvB_array,
+                    d_diffParams, d_Hx_idx, d_Ht_idx, d_path_converge_flag, 
+                    clk_data);
+        #else
         gpu_time = magmaHCWrapper::kernel_HC_Solver_trifocal_2op1p_30_direct_param_homotopy_mb
                    (my_queue, ldda, N, pp->numOfParams, batchCount, d_startSols_array, d_Track_array, 
                     d_startParams, d_targetParams, d_cgesvA_array, d_cgesvB_array,
                     d_diffParams, d_Hx_idx, d_Ht_idx, d_path_converge_flag);
+        #endif
     }
 
     void RANSAC_System_MB::Transfer_Data_From_GPU_to_CPU() 
@@ -226,9 +245,29 @@ namespace RANSAC_Estimator {
         magma_cgetmatrix( (N+1), batchCount*MULTIPLES_OF_TRACKING_PER_WARP,   d_Track, (N+1), h_track_sols,   (N+1), my_queue );
         magma_cgetmatrix( batchCount*MULTIPLES_OF_TRACKING_PER_WARP, 1, d_path_converge_flag, batchCount*MULTIPLES_OF_TRACKING_PER_WARP, h_path_converge_flag,  batchCount*MULTIPLES_OF_TRACKING_PER_WARP, my_queue );
 
+        #if TEST_BLOCK_CYCLE_TIME
+        err = cudaMemcpy(host_clk_data, clk_data, batchCount*sizeof(long long), cudaMemcpyDeviceToHost);
+        printf("peak clock rate: %dkHz\n", peak_clk);
+        #endif
+
         if (DEBUG) {
             //magma_cgetmatrix( N,     batchCount,   d_cgesvB, lddb, h_cgesvB_verify, N,    my_queue );
             //magma_cgetmatrix( N,     N*batchCount, d_cgesvA, ldda, h_cgesvA_verify, N,    my_queue );
+        }
+    }
+
+    void RANSAC_System_MB::Push_Block_Cycle_Time()
+    {
+        float block_time = 0.0;
+        for (int ri = 0; ri < MULTIPLES_OF_TRACKING_PER_WARP; ri++) {
+
+            //> Loop over all paths, push back block cycle time if the HC solution does not go infinity
+            for (int bs = 0; bs < batchCount; bs++) {
+                block_time = (host_clk_data + ri*batchCount)[bs] / (float)peak_clk;
+                //if (block_time > 0.0) {
+                    all_Block_Cycle_Times.push_back(block_time);
+                //}
+            }
         }
     }
 
@@ -250,13 +289,40 @@ namespace RANSAC_Estimator {
                     //> Check the imaginary part of the two relative rotations
                     int small_imag_part_counter = 0;
                     for (int vi = 0; vi < 6; vi++) {
-                        if ( fabs(MAGMA_C_IMAG((h_track_sols + ri*batchCount*(N+1) + bs * (N+1))[vi])) < IMAG_PART_TOL ) small_imag_part_counter++;
+                        if ( fabs(MAGMA_C_IMAG((h_track_sols + ri*batchCount*(N+1) + bs * (N+1))[24 + vi])) < IMAG_PART_TOL ) small_imag_part_counter++;
                     }
 
                     //> Pick the solution if all the imaginary parts of the two relative rotations are small enough
                     if ( small_imag_part_counter == 6 ) {
 
+                        #if TEST_COLLECT_HC_STEPS
                         real_solution_hc_steps.push_back( MAGMA_C_IMAG((h_path_converge_flag + ri*batchCount)[bs]) );
+                        #endif
+
+                        #if TEST_ALL_POSITIVE_DEPTHS_AT_END_ZONE
+                        t_when_depths_are_positive.push_back( MAGMA_C_IMAG((h_path_converge_flag + ri*batchCount)[bs]) );
+                        #endif
+
+                        std::vector<float> vec_Depths_real;
+                        std::vector<float> vec_Depths_imag;
+                        vec_Depths_real.push_back( MAGMA_C_REAL((h_track_sols + ri*batchCount*(N+1) + bs * (N+1))[0]) );
+                        vec_Depths_imag.push_back( MAGMA_C_IMAG((h_track_sols + ri*batchCount*(N+1) + bs * (N+1))[0]) );
+                        vec_Depths_real.push_back( MAGMA_C_REAL((h_track_sols + ri*batchCount*(N+1) + bs * (N+1))[1]) );
+                        vec_Depths_imag.push_back( MAGMA_C_IMAG((h_track_sols + ri*batchCount*(N+1) + bs * (N+1))[1]) );
+                        vec_Depths_real.push_back( MAGMA_C_REAL((h_track_sols + ri*batchCount*(N+1) + bs * (N+1))[2]) );
+                        vec_Depths_imag.push_back( MAGMA_C_IMAG((h_track_sols + ri*batchCount*(N+1) + bs * (N+1))[2]) );
+                        vec_Depths_real.push_back( MAGMA_C_REAL((h_track_sols + ri*batchCount*(N+1) + bs * (N+1))[3]) );
+                        vec_Depths_imag.push_back( MAGMA_C_IMAG((h_track_sols + ri*batchCount*(N+1) + bs * (N+1))[3]) );
+                        vec_Depths_real.push_back( MAGMA_C_REAL((h_track_sols + ri*batchCount*(N+1) + bs * (N+1))[4]) );
+                        vec_Depths_imag.push_back( MAGMA_C_IMAG((h_track_sols + ri*batchCount*(N+1) + bs * (N+1))[4]) );
+                        vec_Depths_real.push_back( MAGMA_C_REAL((h_track_sols + ri*batchCount*(N+1) + bs * (N+1))[5]) );
+                        vec_Depths_imag.push_back( MAGMA_C_IMAG((h_track_sols + ri*batchCount*(N+1) + bs * (N+1))[5]) );
+                        vec_Depths_real.push_back( MAGMA_C_REAL((h_track_sols + ri*batchCount*(N+1) + bs * (N+1))[6]) );
+                        vec_Depths_imag.push_back( MAGMA_C_IMAG((h_track_sols + ri*batchCount*(N+1) + bs * (N+1))[6]) );
+                        vec_Depths_real.push_back( MAGMA_C_REAL((h_track_sols + ri*batchCount*(N+1) + bs * (N+1))[7]) );
+                        vec_Depths_imag.push_back( MAGMA_C_IMAG((h_track_sols + ri*batchCount*(N+1) + bs * (N+1))[7]) );
+                        Depths_real.push_back(vec_Depths_real);
+                        Depths_imag.push_back(vec_Depths_imag);
 
                         //> First normalize the translation part
                         //> T21
@@ -356,11 +422,6 @@ namespace RANSAC_Estimator {
                 epip_coeff_a31_bar = epip_coeff_a31 * views.cam3.img_perturbed_points_pixels[pi](0);
                 epip_coeff_b31_bar = epip_coeff_b31 * views.cam3.img_perturbed_points_pixels[pi](1);
 
-                /*
-                numerOfDist = abs(A_ep + B_it + C);
-                denomOfDist = A.^2 + B.^2;
-                denomOfDist = sqrt(denomOfDist);
-                */
                 //> Distance to the epipolar line in view 2 and 3
                 numerOfDist_21 = fabs( epip_coeff_a21_bar + epip_coeff_b21_bar + epip_coeff_c21 );
                 denomOfDist_21 = sqrt( epip_coeff_a21*epip_coeff_a21 + epip_coeff_b21*epip_coeff_b21 );
@@ -384,6 +445,27 @@ namespace RANSAC_Estimator {
                 true_solution_hc_steps.push_back( real_solution_hc_steps[si] );
             }
             #endif
+
+            #if TEST_ALL_POSITIVE_DEPTHS_AT_END_ZONE
+            if ( Number_Of_Inliers == Number_Of_Points ) {
+                //std::string Yes_No_String = (t_when_depths_are_positive[si] > 0.0) ? "Yes" : "No";
+                //std::cout << "BOOL: depths are positive? " << Yes_No_String << std::endl;
+
+                final_R21 = R21[ si ];
+                final_R31 = R31[ si ];
+                final_T21 = normalized_t21[ si ];
+                final_T31 = normalized_t31[ si ];
+
+                bool Match_GT = Solution_Residual_From_GroundTruths( views );
+                if (Match_GT) {
+                    t_when_depths_are_positive_for_actual_sol.push_back( t_when_depths_are_positive[si] );
+                    std::cout << "t0 when having all positive depths: " << t_when_depths_are_positive[si] << std::endl;
+                    for (int ii = 0; ii < 8; ii++) {
+                        std::cout << Depths_real[si][ii] << ", " << Depths_imag[si][ii] << std::endl;
+                    }
+                }
+            }
+            #endif
         }
 
         //> Assign final RANSAC solution
@@ -395,7 +477,6 @@ namespace RANSAC_Estimator {
         std::cout << "> Pose Index: " << Pose_Index_with_Maximal_Number_of_Inliers << std::endl;
         #if DEBUG
         std::cout << "> Maximal Number of inliers: " << Maximal_Number_of_Inliers << std::endl;
-        
         std::cout << "> Pose with Maximal Number of Inliers: " << std::endl;
         std::cout << "> R21: " << std::endl << R21[Pose_Index_with_Maximal_Number_of_Inliers] << std::endl;
         std::cout << "> T21: " << std::endl << normalized_t21[Pose_Index_with_Maximal_Number_of_Inliers] << std::endl;
@@ -407,23 +488,49 @@ namespace RANSAC_Estimator {
 
     bool RANSAC_System_MB::Solution_Residual_From_GroundTruths( TrifocalViewsWrapper::Trifocal_Views views )
     {
+        //> Rotations residual
         Eigen::Vector3d euler_ang_GT_21 = views.R21.eulerAngles(0, 1, 2);
         Eigen::Vector3d euler_ang_GT_31 = views.R31.eulerAngles(0, 1, 2);
         Eigen::Vector3d euler_ang_final_21 = final_R21.eulerAngles(0, 1, 2);
         Eigen::Vector3d euler_ang_final_31 = final_R31.eulerAngles(0, 1, 2);
-        Rotation_Residual = euler_ang_GT_21 - euler_ang_final_21;
-        Translation_Residual = euler_ang_GT_31 - euler_ang_final_31;
+        R21_Residual = euler_ang_GT_21 - euler_ang_final_21;
+        R31_Residual = euler_ang_GT_31 - euler_ang_final_31;
+        //> Convert from radians to degrees
+        R21_Residual(0) *= 180; R21_Residual(0) /= M_PI;
+        R21_Residual(1) *= 180; R21_Residual(1) /= M_PI;
+        R21_Residual(2) *= 180; R21_Residual(2) /= M_PI;
+        R31_Residual(0) *= 180; R31_Residual(0) /= M_PI;
+        R31_Residual(1) *= 180; R31_Residual(1) /= M_PI;
+        R31_Residual(2) *= 180; R31_Residual(2) /= M_PI;
+
+        //> Translations residual
+        Eigen::Vector3d Transl_GT_21 = views.T21;
+        Eigen::Vector3d Transl_GT_31 = views.T31;
+        T21_Residual = Transl_GT_21 - final_T21;
+        T31_Residual = Transl_GT_31 - final_T31;
 
         #if DEBUG
-        std::cout << "> Euler angles residual: " << std::endl << Rotation_Residual << std::endl;
-        std::cout << "> Translation residual: " << std::endl << Translation_Residual << std::endl;
+        std::cout << "> Euler angles residual for R21: " << std::endl << R21_Residual << std::endl;
+        std::cout << "> Euler angles residual for R31: " << std::endl << R31_Residual << std::endl;
+        std::cout << "> Translation residual  for T21: " << std::endl << T21_Residual << std::endl;
+        std::cout << "> Translation residual  for T31: " << std::endl << T31_Residual << std::endl;
         #endif
 
-        bool Find_True_Rotation    = (Rotation_Residual(0) < RESIDUAL_TO_GT_TOL) & (Rotation_Residual(1) < RESIDUAL_TO_GT_TOL) & (Rotation_Residual(2) < RESIDUAL_TO_GT_TOL);
-        bool Find_True_Translation = (Translation_Residual(0) < RESIDUAL_TO_GT_TOL) & (Translation_Residual(1) < RESIDUAL_TO_GT_TOL) & (Translation_Residual(2) < RESIDUAL_TO_GT_TOL);
+        bool Found_True_R21 = (fabs(R21_Residual(0)) < ROTATION_RESIDUAL_TO_GT_DEG_TOL) & \
+                              (fabs(R21_Residual(1)) < ROTATION_RESIDUAL_TO_GT_DEG_TOL) & \
+                              (fabs(R21_Residual(2)) < ROTATION_RESIDUAL_TO_GT_DEG_TOL);
+        bool Found_True_R31 = (fabs(R31_Residual(0)) < ROTATION_RESIDUAL_TO_GT_DEG_TOL) & \
+                              (fabs(R31_Residual(1)) < ROTATION_RESIDUAL_TO_GT_DEG_TOL) & \
+                              (fabs(R31_Residual(2)) < ROTATION_RESIDUAL_TO_GT_DEG_TOL);
+        bool Found_True_T21 = (fabs(T21_Residual(0)) < TRANSLATION_RESIDUAL_TO_GT_TOL) & \
+                              (fabs(T21_Residual(1)) < TRANSLATION_RESIDUAL_TO_GT_TOL) & \
+                              (fabs(T21_Residual(2)) < TRANSLATION_RESIDUAL_TO_GT_TOL);
+        bool Found_True_T31 = (fabs(T31_Residual(0)) < TRANSLATION_RESIDUAL_TO_GT_TOL) & \
+                              (fabs(T31_Residual(1)) < TRANSLATION_RESIDUAL_TO_GT_TOL) & \
+                              (fabs(T31_Residual(2)) < TRANSLATION_RESIDUAL_TO_GT_TOL);
 
         //> return truw if both rotation and translation satisfy 
-        return Find_True_Rotation & Find_True_Translation;
+        return (Found_True_R21 & Found_True_R31 & Found_True_T21 & Found_True_T31);
     }
 
     void RANSAC_System_MB::Write_Solutions_To_Files( std::ofstream &GPUHC_Solution_File ) 

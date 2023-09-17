@@ -23,18 +23,8 @@
 
 extern "C" {
 namespace magmaHCWrapper {
-  /*
-  real_Double_t kernel_HC_Solver_trifocal_2op1p_30(
-    magma_int_t N, magma_int_t batchCount, magma_int_t ldda,
-    magma_queue_t my_queue,
-    magmaFloatComplex** d_startSols_array, magmaFloatComplex** d_Track_array,
-    magmaFloatComplex** d_cgesvA_array, magmaFloatComplex** d_cgesvB_array,
-    magma_int_t* d_Hx_idx_array, magma_int_t* d_Ht_idx_array,
-    magmaFloatComplex_ptr d_phc_coeffs_Hx, magmaFloatComplex_ptr d_phc_coeffs_Ht,
-    magma_int_t numOf_phc_coeffs
-  );*/
 
-  real_Double_t 
+  /*real_Double_t 
   kernel_HC_Solver_trifocal_2op1p_30_direct_param_homotopy(
     magma_queue_t my_queue,
     magma_int_t ldda,
@@ -51,7 +41,7 @@ namespace magmaHCWrapper {
     magma_int_t* d_Hx_indx, 
     magma_int_t* d_Ht_indx,
     magmaFloatComplex*  d_path_converge_flag
-  );
+  );*/
 
   real_Double_t 
   kernel_HC_Solver_trifocal_2op1p_30_direct_param_homotopy_mb(
@@ -70,6 +60,27 @@ namespace magmaHCWrapper {
     magma_int_t* d_Hx_indx, 
     magma_int_t* d_Ht_indx,
     magmaFloatComplex*  d_path_converge_flag
+  );
+
+  //> Kernel that measures block cycle time
+  real_Double_t 
+  kernel_HC_Solver_trifocal_2op1p_30_direct_param_homotopy_cycle_timing(
+    magma_queue_t my_queue,
+    magma_int_t ldda,
+    magma_int_t N, 
+    magma_int_t num_of_params,
+    magma_int_t batchCount, 
+    magmaFloatComplex** d_startSols_array, 
+    magmaFloatComplex** d_Track_array,
+    magmaFloatComplex*  d_startParams,
+    magmaFloatComplex*  d_targetParams,
+    magmaFloatComplex** d_cgesvA_array, 
+    magmaFloatComplex** d_cgesvB_array,
+    magmaFloatComplex*  d_diffParams,
+    magma_int_t* d_Hx_indx, 
+    magma_int_t* d_Ht_indx,
+    magmaFloatComplex*  d_path_converge_flag,
+    long long *clocks
   );
 }
 }

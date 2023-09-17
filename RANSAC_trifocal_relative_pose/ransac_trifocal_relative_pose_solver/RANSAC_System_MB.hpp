@@ -20,9 +20,16 @@
 #include <vector>
 #include <chrono>
 
+#include <Eigen/Core>
+#include <Eigen/Dense>
+
 #include "magma_v2.h"
 #include "Problem_Params.hpp"
 #include "Views.hpp"
+
+//> TESTING
+//typedef Eigen::Matrix<float, 8, 2> vec_Depths;
+
 
 namespace RANSAC_Estimator {
     
@@ -41,6 +48,7 @@ namespace RANSAC_Estimator {
         void Transform_Solutions_To_Relative_Poses( TrifocalViewsWrapper::Trifocal_Views views );
         void Find_Solution_With_Maximal_Inliers( TrifocalViewsWrapper::Trifocal_Views views );
         bool Solution_Residual_From_GroundTruths( TrifocalViewsWrapper::Trifocal_Views views );
+        void Push_Block_Cycle_Time();
         void Free_Memories();
 
         //void RANSAC_Relative_Pose_by_
@@ -59,14 +67,25 @@ namespace RANSAC_Estimator {
         Eigen::Vector3d final_T21;
         Eigen::Vector3d final_T31;
 
-        Eigen::Vector3d Rotation_Residual;
-        Eigen::Vector3d Translation_Residual;
+        //> Rotation and Translation Residuals
+        Eigen::Vector3d R21_Residual;
+        Eigen::Vector3d R31_Residual;
+        Eigen::Vector3d T21_Residual;
+        Eigen::Vector3d T31_Residual;
 
         //> Timings
         real_Double_t     gpu_time;
 
+        //> TEST OF BLOCK CYCLE TIMINGS
+        long long *clk_data;
+        long long *host_clk_data;
+        std::vector< float > all_Block_Cycle_Times;
+
         //> Some TESTINGS
         std::vector< int > true_solution_hc_steps;
+        std::vector< int > real_solution_hc_steps;
+        std::vector< float > t_when_depths_are_positive; 
+        std::vector< float > t_when_depths_are_positive_for_actual_sol; 
         
     private:
         int Number_Of_Points;
@@ -74,6 +93,8 @@ namespace RANSAC_Estimator {
 
         magma_device_t cdev;       // variable to indicate current gpu id
         magma_queue_t my_queue;    // magma queue variable, internally holds a cuda stream and a cublas handle
+        int peak_clk;
+        cudaError_t err;
 
         magma_int_t batchCount;
         magma_int_t N;
@@ -117,7 +138,9 @@ namespace RANSAC_Estimator {
         Eigen::Vector3d t21;
         Eigen::Vector3d t31;
 
-        std::vector< int > real_solution_hc_steps;
+        //> TESTING
+        std::vector< std::vector<float> > Depths_real;
+        std::vector< std::vector<float> > Depths_imag;
     };
 
 }

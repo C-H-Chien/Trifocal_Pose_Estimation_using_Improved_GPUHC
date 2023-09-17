@@ -153,15 +153,20 @@ namespace magmaHCWrapper {
       __syncthreads();
 
       int linfo = 0, rowid = tx;
-      float t0 = 0.0, t_step = 0.0, delta_t = 0.01;
+      float t0 = 0.0, t_step = 0.0, delta_t = 0.05;
       bool end_zone = 0;
-      int hc_step = 0;
+      //int hc_step = 0;
 
       #pragma unroll
       for(int i = N; i <= num_of_params; i++) {
         s_targetParams[i] = d_targetParams[i];
         s_diffParams[i]   = d_diffParams[i];
       }
+
+      //> Testing
+      bool are_Depths_All_Positive = false;
+      bool check_depths_sign = true;
+      //float t_cue = 0.0;
 
       //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
       /*if (tx == 0 && batchid == 1) {
@@ -189,10 +194,23 @@ namespace magmaHCWrapper {
           // ===================================================================
           if (!end_zone && fabs(1 - t0) <= (0.0500001)) {
             end_zone = true;
-
-            //> TEST!!!!!!!!!!!!!!!!!!!!!
-            //break;
           }
+
+          //> TEST!!!!!!!!!!!!!!!!!!!!!
+          if (check_depths_sign) {
+            are_Depths_All_Positive = (MAGMA_C_REAL(s_track[0]) > 0) && (MAGMA_C_REAL(s_track[1]) > 0) && (MAGMA_C_REAL(s_track[2]) > 0) && (MAGMA_C_REAL(s_track[3]) > 0) &&
+                                      (MAGMA_C_REAL(s_track[4]) > 0) && (MAGMA_C_REAL(s_track[5]) > 0) && (MAGMA_C_REAL(s_track[6]) > 0) && (MAGMA_C_REAL(s_track[7]) > 0);
+            //are_Depths_All_Positive = (fabs(MAGMA_C_IMAG(s_track[0])) < 0.1) && (fabs(MAGMA_C_IMAG(s_track[1])) < 0.1) && 
+            //                          (fabs(MAGMA_C_IMAG(s_track[2])) < 0.1) && (fabs(MAGMA_C_IMAG(s_track[3])) < 0.1) &&
+            //                          (fabs(MAGMA_C_IMAG(s_track[4])) < 0.1) && (fabs(MAGMA_C_IMAG(s_track[5])) < 0.1) &&
+            //                          (fabs(MAGMA_C_IMAG(s_track[6])) < 0.1) && (fabs(MAGMA_C_IMAG(s_track[7])) < 0.1);
+
+            if (t0 > 0) {
+              //t_cue = are_Depths_All_Positive ? t0 : -2;
+              check_depths_sign = are_Depths_All_Positive ? false : true;
+            }
+          }
+          if (t0 > 0.95 && check_depths_sign) break;
 
           if (end_zone) {
             if (delta_t > fabs(1 - t0))
@@ -319,7 +337,7 @@ namespace magmaHCWrapper {
               delta_t *= 2;
             }
           }
-          hc_step++;
+          //hc_step++;
         }
         else {
           break;
@@ -327,7 +345,9 @@ namespace magmaHCWrapper {
       }
 
       //> d_cgesvB tells whether the track is finished, if not, stores t0 and delta_t
-      d_path_converge_flag[batchid + ri*batchCount] = (t0 >= 1.0 || (1.0-t0 <= 0.0000001)) ? MAGMA_C_MAKE(1.0, hc_step) : MAGMA_C_MAKE(t0, delta_t);
+      //d_path_converge_flag[batchid + ri*batchCount] = (t0 >= 1.0 || (1.0-t0 <= 0.0000001)) ? MAGMA_C_MAKE(1.0, hc_step) : MAGMA_C_MAKE(t0, delta_t);
+      //d_path_converge_flag[batchid + ri*batchCount] = (t0 >= 1.0 || (1.0-t0 <= 0.0000001)) ? MAGMA_C_MAKE(1.0, t_cue) : MAGMA_C_MAKE(t0, 0.0);
+      d_path_converge_flag[batchid + ri*batchCount] = (t0 >= 1.0 || (1.0-t0 <= 0.0000001)) ? MAGMA_C_MAKE(1.0, 0.0) : MAGMA_C_MAKE(t0, 0.0);
 
       //> d_track stores the solutions
       d_track[tx] = s_track[tx];
@@ -398,7 +418,7 @@ namespace magmaHCWrapper {
     //> < Number of Unknowns, Number of Parameters, Maximal Steps, Number of correction steps, Number of steps to be successful, Don't care...>
     //> LAST THREE ARGUMENTS: (int batchCount, int NUMBER_OF_BATCHES_MULTIPLES, int NUMBER_OF_TRACKINGS_PER_WARP)
     e = cudaLaunchKernel((void*)HC_solver_trifocal_2op1p_30_direct_param_homotopy_mb
-                         < 30, 33, 100, 5, 10, 8, 5, 40, 16, 6, 312, MULTIPLES_OF_BATCHCOUNT, MULTIPLES_OF_TRACKING_PER_WARP >, 
+                         < 30, 33, MAXIMAL_HC_STEPS, NUM_OF_CORRECTION_STEPS, NUM_OF_STEPS_TO_BE_SUCCESSFUL, 8, 5, 40, 16, 6, 312, MULTIPLES_OF_BATCHCOUNT, MULTIPLES_OF_TRACKING_PER_WARP >, 
                          grid, threads, kernel_args, shmem, my_queue->cuda_stream());
 
 
