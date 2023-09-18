@@ -458,19 +458,19 @@ namespace TrifocalViewsWrapper {
             Homogeneous_Img_Points_Pixels(0) = cam1.img_perturbed_points_pixels[pi](0);
             Homogeneous_Img_Points_Pixels(1) = cam1.img_perturbed_points_pixels[pi](1);
             Homogeneous_Point_in_Meters = inv_K * Homogeneous_Img_Points_Pixels;
-            cam1.img_perturbed_tangents_meters.push_back( { Homogeneous_Point_in_Meters(0), Homogeneous_Point_in_Meters(1) } );
+            cam1.img_perturbed_points_meters.push_back( { Homogeneous_Point_in_Meters(0), Homogeneous_Point_in_Meters(1) } );
 
             //> Camera 2
             Homogeneous_Img_Points_Pixels(0) = cam2.img_perturbed_points_pixels[pi](0);
             Homogeneous_Img_Points_Pixels(1) = cam2.img_perturbed_points_pixels[pi](1);
             Homogeneous_Point_in_Meters = inv_K * Homogeneous_Img_Points_Pixels;
-            cam2.img_perturbed_tangents_meters.push_back( { Homogeneous_Point_in_Meters(0), Homogeneous_Point_in_Meters(1) } );
+            cam2.img_perturbed_points_meters.push_back( { Homogeneous_Point_in_Meters(0), Homogeneous_Point_in_Meters(1) } );
 
             //> Camera 3
             Homogeneous_Img_Points_Pixels(0) = cam3.img_perturbed_points_pixels[pi](0);
             Homogeneous_Img_Points_Pixels(1) = cam3.img_perturbed_points_pixels[pi](1);
             Homogeneous_Point_in_Meters = inv_K * Homogeneous_Img_Points_Pixels;
-            cam3.img_perturbed_tangents_meters.push_back( { Homogeneous_Point_in_Meters(0), Homogeneous_Point_in_Meters(1) } );
+            cam3.img_perturbed_points_meters.push_back( { Homogeneous_Point_in_Meters(0), Homogeneous_Point_in_Meters(1) } );
 
             //> Unperturbed tangents
             //> Camera 1
