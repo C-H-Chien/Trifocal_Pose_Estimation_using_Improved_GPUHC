@@ -32,8 +32,13 @@ namespace TEST_WITH_WRITTEN_FILES {
 
     public:
         write_files_for_test( );
+
+        void write_GroundTruths( Eigen::Matrix3d R21, Eigen::Matrix3d R31, Eigen::Vector3d T21, Eigen::Vector3d T31 );
         
         void write_true_solution_HC_steps( std::vector<int> true_solution_hc_steps );
+
+        void write_Pose_Residuals( std::vector<Eigen::Vector3d> Stacked_R21_Residuals, std::vector<Eigen::Vector3d> Stacked_R31_Residuals,
+                                   std::vector<Eigen::Vector3d> Stacked_T21_Residuals, std::vector<Eigen::Vector3d> Stacked_T31_Residuals );
 
         void write_time_when_depths_are_positive( std::vector<float> time_cue );
 
@@ -43,6 +48,13 @@ namespace TEST_WITH_WRITTEN_FILES {
 
     private:
 
+        std::ofstream GroundTruth_Pose_File;
+
+        std::ofstream Pose_Residuals_R21_File;
+        std::ofstream Pose_Residuals_R31_File;
+        std::ofstream Pose_Residuals_T21_File;
+        std::ofstream Pose_Residuals_T31_File;
+        
         std::ofstream HC_Steps_File;
         std::ofstream Positive_Depths_File;
         std::ofstream Block_Cycle_Times_File;

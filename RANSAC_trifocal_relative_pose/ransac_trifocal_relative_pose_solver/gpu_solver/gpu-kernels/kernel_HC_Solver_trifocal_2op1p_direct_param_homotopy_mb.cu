@@ -155,7 +155,7 @@ namespace magmaHCWrapper {
       int linfo = 0, rowid = tx;
       float t0 = 0.0, t_step = 0.0, delta_t = 0.05;
       bool end_zone = 0;
-      //int hc_step = 0;
+      int hc_step = 0;
 
       #pragma unroll
       for(int i = N; i <= num_of_params; i++) {
@@ -337,7 +337,7 @@ namespace magmaHCWrapper {
               delta_t *= 2;
             }
           }
-          //hc_step++;
+          hc_step++;
         }
         else {
           break;
@@ -345,9 +345,9 @@ namespace magmaHCWrapper {
       }
 
       //> d_cgesvB tells whether the track is finished, if not, stores t0 and delta_t
-      //d_path_converge_flag[batchid + ri*batchCount] = (t0 >= 1.0 || (1.0-t0 <= 0.0000001)) ? MAGMA_C_MAKE(1.0, hc_step) : MAGMA_C_MAKE(t0, delta_t);
+      d_path_converge_flag[batchid + ri*batchCount] = (t0 >= 1.0 || (1.0-t0 <= 0.0000001)) ? MAGMA_C_MAKE(1.0, hc_step) : MAGMA_C_MAKE(t0, delta_t);
       //d_path_converge_flag[batchid + ri*batchCount] = (t0 >= 1.0 || (1.0-t0 <= 0.0000001)) ? MAGMA_C_MAKE(1.0, t_cue) : MAGMA_C_MAKE(t0, 0.0);
-      d_path_converge_flag[batchid + ri*batchCount] = (t0 >= 1.0 || (1.0-t0 <= 0.0000001)) ? MAGMA_C_MAKE(1.0, 0.0) : MAGMA_C_MAKE(t0, 0.0);
+      //d_path_converge_flag[batchid + ri*batchCount] = (t0 >= 1.0 || (1.0-t0 <= 0.0000001)) ? MAGMA_C_MAKE(1.0, 0.0) : MAGMA_C_MAKE(t0, 0.0);
 
       //> d_track stores the solutions
       d_track[tx] = s_track[tx];

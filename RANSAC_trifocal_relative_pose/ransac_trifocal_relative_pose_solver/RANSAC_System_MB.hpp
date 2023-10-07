@@ -73,6 +73,12 @@ namespace RANSAC_Estimator {
         Eigen::Vector3d T21_Residual;
         Eigen::Vector3d T31_Residual;
 
+        //> Stack all residuals
+        std::vector< Eigen::Vector3d > Stacked_R21_Residuals;
+        std::vector< Eigen::Vector3d > Stacked_R31_Residuals;
+        std::vector< Eigen::Vector3d > Stacked_T21_Residuals;
+        std::vector< Eigen::Vector3d > Stacked_T31_Residuals;
+
         //> Timings
         real_Double_t     gpu_time;
 

@@ -32,7 +32,6 @@
 
 #include "../ransac_trifocal_relative_pose_solver/definitions.h"
 #include "../ransac_trifocal_relative_pose_solver/HC_data_reader.hpp"
-//#include "../ransac_trifocal_relative_pose_solver/RANSAC_System.hpp"
 #include "../ransac_trifocal_relative_pose_solver/RANSAC_System_MB.hpp"
 #include "../ransac_trifocal_relative_pose_solver/Files_for_TEST.hpp"
 
@@ -136,6 +135,11 @@ int main(int argc, char **argv) {
     Solve_by_RANSAC.Find_Solution_With_Maximal_Inliers( views );
     bool is_True_Solution_Found = Solve_by_RANSAC.Solution_Residual_From_GroundTruths( views );
     if (is_True_Solution_Found) find_true_solution_counter++;
+
+    Write_Test_Data_to_Files.write_Pose_Residuals( 
+         Solve_by_RANSAC.Stacked_R21_Residuals, Solve_by_RANSAC.Stacked_R31_Residuals,
+         Solve_by_RANSAC.Stacked_T21_Residuals, Solve_by_RANSAC.Stacked_T31_Residuals );
+
     #endif
 
     #if WRITE_SOLUTION_TO_FILE
@@ -180,7 +184,10 @@ int main(int argc, char **argv) {
     std::cout << "> Max/Min Time Cost (ms):         " << max_gpu_time*1000 << " / " << min_gpu_time*1000 << std::endl;
   }
   #endif
-  
+
+  //> Write Ground Truths to a File
+  Write_Test_Data_to_Files.write_GroundTruths(views.R21, views.R31, views.T21, views.T31);
+    
   Write_Test_Data_to_Files.close_all_files();
 
   delete pp;

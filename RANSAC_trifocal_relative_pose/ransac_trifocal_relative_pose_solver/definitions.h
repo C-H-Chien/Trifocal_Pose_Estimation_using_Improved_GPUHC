@@ -38,15 +38,13 @@
 //> Some TESTINGS
 #define TOTAL_TEST_TIMES                        (100)   //> TEST: repeated times, simulating how many relative pose estimation needs to be computed
 #define TEST_BLOCK_CYCLE_TIME                   (false)
-#define TEST_COLLECT_HC_STEPS                   (false)
-#define TEST_ALL_POSITIVE_DEPTHS_AT_END_ZONE    (true)
+#define TEST_COLLECT_HC_STEPS                   (true)
+#define TEST_ALL_POSITIVE_DEPTHS_AT_END_ZONE    (false)
 
 //> Some Assertion Checks
 #define IS_SO3_DET_R_TOL            (1e-5)              //> Check whether a rotation matrix belongs to SO(3) group, i.e., det(R)=1
 
 #define OUTPUT_WRITE_FOLDER        std::string("outputs_write_files/")
-
-//#define ENABLE_CPUHC_SOLVER        (1)
 
 #define SHOW_LAPACK_NUM_OF_THREADS (0)
 

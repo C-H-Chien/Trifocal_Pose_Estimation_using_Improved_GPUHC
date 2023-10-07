@@ -148,26 +148,26 @@ namespace RANSAC_Estimator {
                 if ( (p1_idx != p2_idx) && (p1_idx != p3_idx) && (p2_idx != p3_idx) ) break;
             }
 
-            (h_targetParams + ti*(pp->numOfParams+1))[0] = MAGMA_C_MAKE(views.cam1.img_points_meters[p1_idx](0), 0.0);
-            (h_targetParams + ti*(pp->numOfParams+1))[1] = MAGMA_C_MAKE(views.cam1.img_points_meters[p1_idx](1), 0.0);
-            (h_targetParams + ti*(pp->numOfParams+1))[2] = MAGMA_C_MAKE(views.cam2.img_points_meters[p1_idx](0), 0.0);
-            (h_targetParams + ti*(pp->numOfParams+1))[3] = MAGMA_C_MAKE(views.cam2.img_points_meters[p1_idx](1), 0.0);
-            (h_targetParams + ti*(pp->numOfParams+1))[4] = MAGMA_C_MAKE(views.cam3.img_points_meters[p1_idx](0), 0.0);
-            (h_targetParams + ti*(pp->numOfParams+1))[5] = MAGMA_C_MAKE(views.cam3.img_points_meters[p1_idx](1), 0.0);
+            (h_targetParams + ti*(pp->numOfParams+1))[0] = MAGMA_C_MAKE(views.cam1.img_perturbed_points_meters[p1_idx](0), 0.0);
+            (h_targetParams + ti*(pp->numOfParams+1))[1] = MAGMA_C_MAKE(views.cam1.img_perturbed_points_meters[p1_idx](1), 0.0);
+            (h_targetParams + ti*(pp->numOfParams+1))[2] = MAGMA_C_MAKE(views.cam2.img_perturbed_points_meters[p1_idx](0), 0.0);
+            (h_targetParams + ti*(pp->numOfParams+1))[3] = MAGMA_C_MAKE(views.cam2.img_perturbed_points_meters[p1_idx](1), 0.0);
+            (h_targetParams + ti*(pp->numOfParams+1))[4] = MAGMA_C_MAKE(views.cam3.img_perturbed_points_meters[p1_idx](0), 0.0);
+            (h_targetParams + ti*(pp->numOfParams+1))[5] = MAGMA_C_MAKE(views.cam3.img_perturbed_points_meters[p1_idx](1), 0.0);
 
-            (h_targetParams + ti*(pp->numOfParams+1))[6]  = MAGMA_C_MAKE(views.cam1.img_points_meters[p2_idx](0), 0.0);
-            (h_targetParams + ti*(pp->numOfParams+1))[7]  = MAGMA_C_MAKE(views.cam1.img_points_meters[p2_idx](1), 0.0);
-            (h_targetParams + ti*(pp->numOfParams+1))[8]  = MAGMA_C_MAKE(views.cam2.img_points_meters[p2_idx](0), 0.0);
-            (h_targetParams + ti*(pp->numOfParams+1))[9]  = MAGMA_C_MAKE(views.cam2.img_points_meters[p2_idx](1), 0.0);
-            (h_targetParams + ti*(pp->numOfParams+1))[10] = MAGMA_C_MAKE(views.cam3.img_points_meters[p2_idx](0), 0.0);
-            (h_targetParams + ti*(pp->numOfParams+1))[11] = MAGMA_C_MAKE(views.cam3.img_points_meters[p2_idx](1), 0.0);
+            (h_targetParams + ti*(pp->numOfParams+1))[6]  = MAGMA_C_MAKE(views.cam1.img_perturbed_points_meters[p2_idx](0), 0.0);
+            (h_targetParams + ti*(pp->numOfParams+1))[7]  = MAGMA_C_MAKE(views.cam1.img_perturbed_points_meters[p2_idx](1), 0.0);
+            (h_targetParams + ti*(pp->numOfParams+1))[8]  = MAGMA_C_MAKE(views.cam2.img_perturbed_points_meters[p2_idx](0), 0.0);
+            (h_targetParams + ti*(pp->numOfParams+1))[9]  = MAGMA_C_MAKE(views.cam2.img_perturbed_points_meters[p2_idx](1), 0.0);
+            (h_targetParams + ti*(pp->numOfParams+1))[10] = MAGMA_C_MAKE(views.cam3.img_perturbed_points_meters[p2_idx](0), 0.0);
+            (h_targetParams + ti*(pp->numOfParams+1))[11] = MAGMA_C_MAKE(views.cam3.img_perturbed_points_meters[p2_idx](1), 0.0);
 
-            (h_targetParams + ti*(pp->numOfParams+1))[12] = MAGMA_C_MAKE(views.cam1.img_points_meters[p3_idx](0), 0.0);
-            (h_targetParams + ti*(pp->numOfParams+1))[13] = MAGMA_C_MAKE(views.cam1.img_points_meters[p3_idx](1), 0.0);
-            (h_targetParams + ti*(pp->numOfParams+1))[14] = MAGMA_C_MAKE(views.cam2.img_points_meters[p3_idx](0), 0.0);
-            (h_targetParams + ti*(pp->numOfParams+1))[15] = MAGMA_C_MAKE(views.cam2.img_points_meters[p3_idx](1), 0.0);
-            (h_targetParams + ti*(pp->numOfParams+1))[16] = MAGMA_C_MAKE(views.cam3.img_points_meters[p3_idx](0), 0.0);
-            (h_targetParams + ti*(pp->numOfParams+1))[17] = MAGMA_C_MAKE(views.cam3.img_points_meters[p3_idx](1), 0.0);
+            (h_targetParams + ti*(pp->numOfParams+1))[12] = MAGMA_C_MAKE(views.cam1.img_perturbed_points_meters[p3_idx](0), 0.0);
+            (h_targetParams + ti*(pp->numOfParams+1))[13] = MAGMA_C_MAKE(views.cam1.img_perturbed_points_meters[p3_idx](1), 0.0);
+            (h_targetParams + ti*(pp->numOfParams+1))[14] = MAGMA_C_MAKE(views.cam2.img_perturbed_points_meters[p3_idx](0), 0.0);
+            (h_targetParams + ti*(pp->numOfParams+1))[15] = MAGMA_C_MAKE(views.cam2.img_perturbed_points_meters[p3_idx](1), 0.0);
+            (h_targetParams + ti*(pp->numOfParams+1))[16] = MAGMA_C_MAKE(views.cam3.img_perturbed_points_meters[p3_idx](0), 0.0);
+            (h_targetParams + ti*(pp->numOfParams+1))[17] = MAGMA_C_MAKE(views.cam3.img_perturbed_points_meters[p3_idx](1), 0.0);
 
             (h_targetParams + ti*(pp->numOfParams+1))[18] = MAGMA_C_MAKE(views.cam1.img_tangents_meters[p1_idx](0), 0.0);
             (h_targetParams + ti*(pp->numOfParams+1))[19] = MAGMA_C_MAKE(views.cam1.img_tangents_meters[p1_idx](1), 0.0);
@@ -303,7 +303,7 @@ namespace RANSAC_Estimator {
                         t_when_depths_are_positive.push_back( MAGMA_C_IMAG((h_path_converge_flag + ri*batchCount)[bs]) );
                         #endif
 
-                        std::vector<float> vec_Depths_real;
+                        /*std::vector<float> vec_Depths_real;
                         std::vector<float> vec_Depths_imag;
                         vec_Depths_real.push_back( MAGMA_C_REAL((h_track_sols + ri*batchCount*(N+1) + bs * (N+1))[0]) );
                         vec_Depths_imag.push_back( MAGMA_C_IMAG((h_track_sols + ri*batchCount*(N+1) + bs * (N+1))[0]) );
@@ -322,7 +322,7 @@ namespace RANSAC_Estimator {
                         vec_Depths_real.push_back( MAGMA_C_REAL((h_track_sols + ri*batchCount*(N+1) + bs * (N+1))[7]) );
                         vec_Depths_imag.push_back( MAGMA_C_IMAG((h_track_sols + ri*batchCount*(N+1) + bs * (N+1))[7]) );
                         Depths_real.push_back(vec_Depths_real);
-                        Depths_imag.push_back(vec_Depths_imag);
+                        Depths_imag.push_back(vec_Depths_imag);*/
 
                         //> First normalize the translation part
                         //> T21
@@ -442,6 +442,7 @@ namespace RANSAC_Estimator {
 
             #if TEST_COLLECT_HC_STEPS
             if ( Number_Of_Inliers == Number_Of_Points ) {
+                std::cout << "Pushing number of HC steps!" << std::endl;
                 true_solution_hc_steps.push_back( real_solution_hc_steps[si] );
             }
             #endif
@@ -460,9 +461,9 @@ namespace RANSAC_Estimator {
                 if (Match_GT) {
                     t_when_depths_are_positive_for_actual_sol.push_back( t_when_depths_are_positive[si] );
                     std::cout << "t0 when having all positive depths: " << t_when_depths_are_positive[si] << std::endl;
-                    for (int ii = 0; ii < 8; ii++) {
+                    /*for (int ii = 0; ii < 8; ii++) {
                         std::cout << Depths_real[si][ii] << ", " << Depths_imag[si][ii] << std::endl;
-                    }
+                    }*/
                 }
             }
             #endif
@@ -508,6 +509,12 @@ namespace RANSAC_Estimator {
         Eigen::Vector3d Transl_GT_31 = views.T31;
         T21_Residual = Transl_GT_21 - final_T21;
         T31_Residual = Transl_GT_31 - final_T31;
+
+        //> Store by stacking all residuals
+        Stacked_R21_Residuals.push_back(R21_Residual);
+        Stacked_R31_Residuals.push_back(R31_Residual);
+        Stacked_T21_Residuals.push_back(T21_Residual);
+        Stacked_T31_Residuals.push_back(T31_Residual);
 
         #if DEBUG
         std::cout << "> Euler angles residual for R21: " << std::endl << R21_Residual << std::endl;
