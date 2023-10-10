@@ -35,6 +35,10 @@ namespace TEST_WITH_WRITTEN_FILES {
         GroundTruth_Pose_File.open(write_file_dir_GT_Pose);
         if ( !GroundTruth_Pose_File.is_open() ) std::cout << "File " << write_file_dir_GT_Pose << " cannot be opened!" << std::endl;
 
+        std::string write_file_dir_Result_Information = REPO_DIR + "Result_Information.txt";
+        Final_Result_Information.open(write_file_dir_Result_Information);
+        if ( !Final_Result_Information.is_open() ) std::cout << "File " << write_file_dir_Result_Information << " cannot be opened!" << std::endl;
+
         //> Pose Residuals File
         std::string write_file_dir_Pose_Residuals_R21 = REPO_DIR + "Stacked_Residuals_R21.txt";
         Pose_Residuals_R21_File.open(write_file_dir_Pose_Residuals_R21);
@@ -129,17 +133,47 @@ namespace TEST_WITH_WRITTEN_FILES {
         }
     }
 
-    void write_files_for_test::write_time_when_depths_are_positive( std::vector<float> time_cue )
-    {
-        for (int i = 0; i < time_cue.size(); i++ ) {
-            Positive_Depths_File << time_cue[i] << "\n";
-        }
+    void write_files_for_test::write_time_when_depths_are_positive( std::vector<float> time_cue ) {
+        for (int i = 0; i < time_cue.size(); i++ ) Positive_Depths_File << time_cue[i] << "\n";
     }
 
     void write_files_for_test::write_block_cycle_times( std::vector<float> cycle_clock_times ) {
-        for (int i = 0; i < cycle_clock_times.size(); i++ ) {
-            Block_Cycle_Times_File << cycle_clock_times[i] << "\n";
+        for (int i = 0; i < cycle_clock_times.size(); i++ ) Block_Cycle_Times_File << cycle_clock_times[i] << "\n";
+    }
+
+    void write_files_for_test::write_final_information( std::vector<int> final_indices, 
+                                                        Eigen::Matrix3d final_R21, Eigen::Matrix3d final_R31, 
+                                                        Eigen::Vector3d final_T21, Eigen::Vector3d final_T31)
+    {
+        //> Write inlier indices
+        for (int i = 0; i < final_indices.size(); i++) Final_Result_Information << final_indices[i] << "\t";
+        Final_Result_Information << "\n";
+
+        //> Write R21
+        for (int i = 0; i < 3; i++) {
+            for (int j = 0; j < 3; j++) {
+                Final_Result_Information << final_R21(i,j) << "\t";
+            }
+            Final_Result_Information << "\n";
         }
+        Final_Result_Information << "\n";
+
+        //> Write R31
+        for (int i = 0; i < 3; i++) {
+            for (int j = 0; j < 3; j++) {
+                Final_Result_Information << final_R31(i,j) << "\t";
+            }
+            Final_Result_Information << "\n";
+        }
+        Final_Result_Information << "\n";
+
+        //> Write T21
+        for (int i = 0; i < 3; i++) Final_Result_Information << final_T21[i] << "\t";
+        Final_Result_Information << "\n";
+
+        //> Write T31
+        for (int i = 0; i < 3; i++) Final_Result_Information << final_T31[i] << "\t";
+        Final_Result_Information << "\n\n";
     }
 
     void write_files_for_test::close_all_files() {
@@ -161,6 +195,8 @@ namespace TEST_WITH_WRITTEN_FILES {
         Pose_Residuals_R31_File.close();
         Pose_Residuals_T21_File.close();
         Pose_Residuals_T31_File.close();
+
+        Final_Result_Information.close();
     }
 }
 

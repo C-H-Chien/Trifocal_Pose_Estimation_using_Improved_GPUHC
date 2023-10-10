@@ -44,6 +44,10 @@ namespace TEST_WITH_WRITTEN_FILES {
 
         void write_block_cycle_times( std::vector<float> block_cycle_times );
 
+        void write_final_information( std::vector<int> final_indices, 
+                                      Eigen::Matrix3d final_R21, Eigen::Matrix3d final_R31, 
+                                      Eigen::Vector3d final_T21, Eigen::Vector3d final_T31);
+
         void close_all_files();
 
     private:
@@ -54,6 +58,8 @@ namespace TEST_WITH_WRITTEN_FILES {
         std::ofstream Pose_Residuals_R31_File;
         std::ofstream Pose_Residuals_T21_File;
         std::ofstream Pose_Residuals_T31_File;
+
+        std::ofstream Final_Result_Information;
         
         std::ofstream HC_Steps_File;
         std::ofstream Positive_Depths_File;
