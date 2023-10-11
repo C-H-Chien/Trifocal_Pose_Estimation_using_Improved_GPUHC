@@ -21,6 +21,7 @@
 #include <chrono>
 
 #include "definitions.h"
+#include "Views.hpp"
 
 //> Eigen library
 #include <Eigen/Core>
@@ -44,9 +45,10 @@ namespace TEST_WITH_WRITTEN_FILES {
 
         void write_block_cycle_times( std::vector<float> block_cycle_times );
 
-        void write_final_information( std::vector<int> final_indices, 
-                                      Eigen::Matrix3d final_R21, Eigen::Matrix3d final_R31, 
-                                      Eigen::Vector3d final_T21, Eigen::Vector3d final_T31);
+        void write_final_information( std::vector<int> final_indices, std::array<int, 3> final_match_indices,
+                                      TrifocalViewsWrapper::Trifocal_Views views,
+                                      Eigen::Vector3d final_Unnormalized_R21, Eigen::Vector3d final_Unnormalized_R31, 
+                                      Eigen::Vector3d final_Unnormalized_T21, Eigen::Vector3d final_Unnormalized_T31);
 
         void close_all_files();
 

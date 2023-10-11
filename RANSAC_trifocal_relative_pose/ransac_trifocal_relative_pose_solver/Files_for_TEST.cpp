@@ -21,6 +21,7 @@
 #include <chrono>
 
 #include "Files_for_TEST.hpp"
+#include "Views.hpp"
 
 //> Eigen library
 #include <Eigen/Core>
@@ -141,38 +142,83 @@ namespace TEST_WITH_WRITTEN_FILES {
         for (int i = 0; i < cycle_clock_times.size(); i++ ) Block_Cycle_Times_File << cycle_clock_times[i] << "\n";
     }
 
-    void write_files_for_test::write_final_information( std::vector<int> final_indices, 
-                                                        Eigen::Matrix3d final_R21, Eigen::Matrix3d final_R31, 
-                                                        Eigen::Vector3d final_T21, Eigen::Vector3d final_T31)
+    void write_files_for_test::write_final_information( std::vector<int> final_indices, std::array<int, 3> final_match_indices,
+                                                        TrifocalViewsWrapper::Trifocal_Views views,
+                                                        Eigen::Vector3d final_Unnormalized_R21, Eigen::Vector3d final_Unnormalized_R31, 
+                                                        Eigen::Vector3d final_Unnormalized_T21, Eigen::Vector3d final_Unnormalized_T31)
     {
         //> Write inlier indices
-        for (int i = 0; i < final_indices.size(); i++) Final_Result_Information << final_indices[i] << "\t";
-        Final_Result_Information << "\n";
+        //for (int i = 0; i < final_indices.size(); i++) Final_Result_Information << final_indices[i] << "\t";
+        //Final_Result_Information << "\n";
 
-        //> Write R21
-        for (int i = 0; i < 3; i++) {
+        int p1_idx = final_match_indices[0];
+        int p2_idx = final_match_indices[1];
+        int p3_idx = final_match_indices[2];
+
+        //> Write target params
+        Final_Result_Information << views.cam1.img_perturbed_points_meters[p1_idx](0) << "\t";
+        Final_Result_Information << views.cam1.img_perturbed_points_meters[p1_idx](1) << "\t1.0\n";
+        Final_Result_Information << views.cam2.img_perturbed_points_meters[p1_idx](0) << "\t";
+        Final_Result_Information << views.cam2.img_perturbed_points_meters[p1_idx](1) << "\t1.0\n";
+        Final_Result_Information << views.cam3.img_perturbed_points_meters[p1_idx](0) << "\t";
+        Final_Result_Information << views.cam3.img_perturbed_points_meters[p1_idx](1) << "\t1.0\n";
+        Final_Result_Information << views.cam1.img_perturbed_points_meters[p2_idx](0) << "\t";
+        Final_Result_Information << views.cam1.img_perturbed_points_meters[p2_idx](1) << "\t1.0\n";
+        Final_Result_Information << views.cam2.img_perturbed_points_meters[p2_idx](0) << "\t";
+        Final_Result_Information << views.cam2.img_perturbed_points_meters[p2_idx](1) << "\t1.0\n";
+        Final_Result_Information << views.cam3.img_perturbed_points_meters[p2_idx](0) << "\t";
+        Final_Result_Information << views.cam3.img_perturbed_points_meters[p2_idx](1) << "\t1.0\n";
+        Final_Result_Information << views.cam1.img_perturbed_points_meters[p3_idx](0) << "\t";
+        Final_Result_Information << views.cam1.img_perturbed_points_meters[p3_idx](1) << "\t1.0\n";
+        Final_Result_Information << views.cam2.img_perturbed_points_meters[p3_idx](0) << "\t";
+        Final_Result_Information << views.cam2.img_perturbed_points_meters[p3_idx](1) << "\t1.0\n";
+        Final_Result_Information << views.cam3.img_perturbed_points_meters[p3_idx](0) << "\t";
+        Final_Result_Information << views.cam3.img_perturbed_points_meters[p3_idx](1) << "\t1.0\n";
+        Final_Result_Information << views.cam1.img_perturbed_tangents_meters[p1_idx](0) << "\t";
+        Final_Result_Information << views.cam1.img_perturbed_tangents_meters[p1_idx](1) << "\t0.0\n";
+        Final_Result_Information << views.cam2.img_perturbed_tangents_meters[p1_idx](0) << "\t";
+        Final_Result_Information << views.cam2.img_perturbed_tangents_meters[p1_idx](1) << "\t0.0\n";
+        Final_Result_Information << views.cam3.img_perturbed_tangents_meters[p1_idx](0) << "\t";
+        Final_Result_Information << views.cam3.img_perturbed_tangents_meters[p1_idx](1) << "\t0.0\n";
+        Final_Result_Information << views.cam1.img_perturbed_tangents_meters[p2_idx](0) << "\t";
+        Final_Result_Information << views.cam1.img_perturbed_tangents_meters[p2_idx](1) << "\t0.0\n";
+        Final_Result_Information << views.cam2.img_perturbed_tangents_meters[p2_idx](0) << "\t";
+        Final_Result_Information << views.cam2.img_perturbed_tangents_meters[p2_idx](1) << "\t0.0\n";
+        Final_Result_Information << views.cam3.img_perturbed_tangents_meters[p2_idx](0) << "\t";
+        Final_Result_Information << views.cam3.img_perturbed_tangents_meters[p2_idx](1) << "\t0.0\n";
+
+        //Final_Result_Information << final_match_indices[0] << "\t";
+        //Final_Result_Information << final_match_indices[1] << "\t";
+        //Final_Result_Information << final_match_indices[2] << "\n";
+
+        //> Write Unnormalized R21
+        for (int i = 0; i < 3; i++) Final_Result_Information << final_Unnormalized_R21[i] << "\t";
+        Final_Result_Information << "\n";
+        /*for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 3; j++) {
-                Final_Result_Information << final_R21(i,j) << "\t";
+                Final_Result_Information << final_Unnormalized_R21(i,j) << "\t";
             }
             Final_Result_Information << "\n";
         }
-        Final_Result_Information << "\n";
+        Final_Result_Information << "\n";*/
 
-        //> Write R31
-        for (int i = 0; i < 3; i++) {
+        //> Write Unnormalized R31
+        for (int i = 0; i < 3; i++) Final_Result_Information << final_Unnormalized_R31[i] << "\t";
+        Final_Result_Information << "\n";
+        /*for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 3; j++) {
-                Final_Result_Information << final_R31(i,j) << "\t";
+                Final_Result_Information << final_Unnormalized_R31(i,j) << "\t";
             }
             Final_Result_Information << "\n";
         }
+        Final_Result_Information << "\n";*/
+
+        //> Write Unnormalized T21
+        for (int i = 0; i < 3; i++) Final_Result_Information << final_Unnormalized_T21[i] << "\t";
         Final_Result_Information << "\n";
 
-        //> Write T21
-        for (int i = 0; i < 3; i++) Final_Result_Information << final_T21[i] << "\t";
-        Final_Result_Information << "\n";
-
-        //> Write T31
-        for (int i = 0; i < 3; i++) Final_Result_Information << final_T31[i] << "\t";
+        //> Write Unnormalized T31
+        for (int i = 0; i < 3; i++) Final_Result_Information << final_Unnormalized_T31[i] << "\t";
         Final_Result_Information << "\n\n";
     }
 
