@@ -37,39 +37,34 @@
 
 int main(int argc, char **argv) {
 
-  //> View indices
-  int View1_Indx = 80;
-  int View2_Indx = 82;
-  int View3_Indx = 84;
+  #if USE_SYNTHETIC_CURVE_DATASET
+    //> View indices
+    int View1_Indx = 80;
+    int View2_Indx = 82;
+    int View3_Indx = 84;
 
-  //> Curve indices (don't care for the moment)
-  int Curve1_Indx = 10;
-  int Curve2_Indx = 12;
-  int Curve3_Indx = 14;
+    //> Define constant view variables
+    TrifocalViewsWrapper::Trifocal_Views views(View1_Indx, View2_Indx, View3_Indx, CURVE_DATASET_DIR);
+    views.Read_In_Dataset_ImagePoints();
+    views.Read_In_Dataset_ImageTangents();
+    views.Read_In_Dataset_CameraMatrices();
+    views.Add_Noise_to_Points_on_Curves( );
+    views.Convert_From_Pixels_to_Meters();
+    views.Compute_Trifocal_Relative_Pose_Ground_Truth();
+  #else
+    int triplet_views_instance = 1;
+    TrifocalViewsWrapper::Trifocal_Views views( triplet_views_instance, TARGET_PARAMS_SOURCE_DATASET );
+    views.Read_In_Dataset_with_Triplet_Matches_CameraMatrices();
+    std::cout << "Complete reading camera matrices." << std::endl;
+    views.Read_In_Triplet_Matches();
+    std::cout << "Complete reading triplet matches." << std::endl;
+    views.Compute_Trifocal_Relative_Pose_Ground_Truth();
+  #endif
 
-  //> Define constant view variables
-  TrifocalViewsWrapper::Trifocal_Views views(View1_Indx, View2_Indx, View3_Indx, Curve1_Indx, Curve2_Indx, Curve3_Indx, CURVE_DATASET_DIR);
-  views.Read_In_Dataset_ImagePoints();
-  views.Read_In_Dataset_ImageTangents();
-  views.Read_In_Dataset_CameraMatrices();
-  views.Add_Noise_to_Points_on_Curves( );
-  views.Convert_From_Pixels_to_Meters();
-  views.Compute_Trifocal_Relative_Pose_Ground_Truth();
-  /*std::cout << "> Ground Truths: " << std::endl;
-  std::cout << "  R21: " << std::endl;
-  std::cout << views.R21 << std::endl;
-  std::cout << "  T21: " << std::endl;
-  std::cout << views.T21 << std::endl;
-  std::cout << "  R31: " << std::endl;
-  std::cout << views.R31 << std::endl;
-  std::cout << "  T31: " << std::endl;
-  std::cout << views.T31 << std::endl;
-  std::cout << "  F21: " << std::endl;
-  std::cout << views.F21 << std::endl;
-  std::cout << "  F31: " << std::endl;
-  std::cout << views.F31 << std::endl;*/
+  views.Write_Triplet_Edgles_to_File();
+  std::cout << views.cam1.img_perturbed_points_pixels.size() << std::endl;
 
-  std::cout << views.cam1.img_points_pixels.size() << std::endl;
+  //return 0;
 
   //> Assertion check for the deinitions variables
   if( MULTIPLES_OF_BATCHCOUNT * MULTIPLES_OF_TRACKING_PER_WARP == RANSAC_Number_Of_Iterations ) {}
@@ -92,7 +87,6 @@ int main(int argc, char **argv) {
   double max_gpu_time = 0;
   double min_gpu_time = 10000;
   int find_true_solution_counter = 0;
-  //int TOTAL_TEST_TIMES = 100;
   for (int ti = 0; ti < TOTAL_TEST_TIMES; ti++) {
     //> Initialize RANSAC Scheme
     //RANSAC_Estimator::RANSAC_System Solve_by_RANSAC( pp );
@@ -131,15 +125,24 @@ int main(int argc, char **argv) {
     #if TEST_BLOCK_CYCLE_TIME
     Solve_by_RANSAC.Push_Block_Cycle_Time();
     #else
-    Solve_by_RANSAC.Transform_Solutions_To_Relative_Poses( views );
+    Solve_by_RANSAC.Transform_Solutions_To_Relative_Poses( views, pp );
     Solve_by_RANSAC.Find_Solution_With_Maximal_Inliers( views );
+
+    //> Write RANSAC estimation results to a file
+    Write_Test_Data_to_Files.write_final_information( Solve_by_RANSAC.final_inlier_indices, views, \
+                                                      Solve_by_RANSAC.final_match_indices, Solve_by_RANSAC.final_depths, \
+                                                      Solve_by_RANSAC.final_unnormalized_r21, Solve_by_RANSAC.final_unnormalized_r31,   \
+                                                      Solve_by_RANSAC.final_unnormalized_t21, Solve_by_RANSAC.final_unnormalized_t31 );
+
     bool is_True_Solution_Found = Solve_by_RANSAC.Solution_Residual_From_GroundTruths( views );
-    if (is_True_Solution_Found) find_true_solution_counter++;
+    if (is_True_Solution_Found) find_true_solution_counter++;\
+
+    Write_Test_Data_to_Files.write_So_far_the_best_Pose( Solve_by_RANSAC.final_unnormalized_r21, Solve_by_RANSAC.final_unnormalized_r31, \
+                                                         Solve_by_RANSAC.final_unnormalized_t21, Solve_by_RANSAC.final_unnormalized_t31 );
 
     Write_Test_Data_to_Files.write_Pose_Residuals( 
-         Solve_by_RANSAC.Stacked_R21_Residuals, Solve_by_RANSAC.Stacked_R31_Residuals,
-         Solve_by_RANSAC.Stacked_T21_Residuals, Solve_by_RANSAC.Stacked_T31_Residuals );
-
+         Solve_by_RANSAC.R21_Residual, Solve_by_RANSAC.R31_Residual,
+         Solve_by_RANSAC.T21_Residual, Solve_by_RANSAC.T31_Residual );
     #endif
 
     #if WRITE_SOLUTION_TO_FILE

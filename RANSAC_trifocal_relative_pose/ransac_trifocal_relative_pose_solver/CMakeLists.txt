@@ -56,9 +56,7 @@ include_directories( "/users/cchien3/data/cchien3/magma/magmablas" )
 
 add_library( ransac_trifocal_relative_pose ${control_sources} )
 target_link_libraries(ransac_trifocal_relative_pose 
-        -L/gpfs/runtime/opt/magma-gpu/2.4.0/lib magma
-        -L${CUDAPATH}/lib cublas cudart cusparse
-        -L/gpfs/runtime/opt/openblas/0.3.7/lib openblas
-        -L/usr/lib64 pthread
+        -L/users/cchien3/data/cchien3/magma-cchien3/lib magma
+        -L/gpfs/runtime/opt/openblas/0.3.23-u6k5fey/lib openblas
 )
 set_target_properties(ransac_trifocal_relative_pose PROPERTIES CUDA_SEPARABLE_COMPILATION ON)

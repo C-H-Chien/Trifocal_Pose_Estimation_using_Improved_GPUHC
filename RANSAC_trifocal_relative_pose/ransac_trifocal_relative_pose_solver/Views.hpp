@@ -20,11 +20,11 @@
 #include <vector>
 #include <chrono>
 
-//#include "magma_v2.h"
-
 //> Eigen library
 #include <Eigen/Core>
 #include <Eigen/Dense>
+
+typedef Eigen::Matrix<double, 12, 1> Vector12d;
 
 namespace TrifocalViewsWrapper {
     struct View1 {
@@ -72,10 +72,13 @@ namespace TrifocalViewsWrapper {
     
     class Trifocal_Views {
 
-
     public:
         
-        Trifocal_Views(int, int, int, int, int, int, std::string);
+        //> Contructor: reading synthetic curve dataset
+        Trifocal_Views(int, int, int, std::string);
+
+        //> Constructor: reading arbitrary dataset with target parameters
+        Trifocal_Views( int, std::string );
 
         View1 cam1;
         View2 cam2;
@@ -90,11 +93,19 @@ namespace TrifocalViewsWrapper {
         Eigen::Matrix3d F31;
         int Number_Of_Outliers;
         
+        //> For synthetic curve dataset
         void Read_In_Dataset_ImagePoints();
         void Read_In_Dataset_ImageTangents();
         void Read_In_Dataset_CameraMatrices();
         void Add_Noise_to_Points_on_Curves();
+        void Write_Triplet_Edgles_to_File();
+        
+        //> For any arbitrary dataset with triplet matches
+        void Read_In_Dataset_with_Triplet_Matches_CameraMatrices();
+        void Read_In_Triplet_Matches();
+        std::vector< std::array<double, 12> > Structured_Triplet_Matches;
 
+        //> Common/shared member function
         void Compute_Trifocal_Relative_Pose_Ground_Truth();
 
         int getRandPermNum(std::vector<int>& v);
@@ -105,16 +116,14 @@ namespace TrifocalViewsWrapper {
         int View1_Index;
         int View2_Index;
         int View3_Index;
-        int Curve1_Index;
-        int Curve2_Index;
-        int Curve3_Index;
         std::string Dataset_Path;
 
         std::string View1_Indx_Str;
         std::string View2_Indx_Str;
         std::string View3_Indx_Str;
 
-        
+        std::string triplet_instance;
+        int Target_Instance;
 
         std::vector<int> Curve_Index_Collection_List;
     };

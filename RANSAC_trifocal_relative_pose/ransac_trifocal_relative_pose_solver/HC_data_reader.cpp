@@ -43,7 +43,6 @@ namespace HC_Data_Import {
                                                       magmaHCWrapper::Problem_Params* pp, bool use_MB ) 
     {
         int loop_end_for_startSols = ( use_MB ) ? MULTIPLES_OF_BATCHCOUNT : ( 1 );
-        //int loop_end_for_Track     = ( use_MB ) ? : RANSAC_Number_Of_Iterations;
 
         int d = 0, i = 0; 
         float s_real, s_imag;

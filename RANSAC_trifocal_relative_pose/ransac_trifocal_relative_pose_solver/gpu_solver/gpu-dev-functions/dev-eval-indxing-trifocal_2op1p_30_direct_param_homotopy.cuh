@@ -70,7 +70,7 @@ namespace magmaHCWrapper {
     )
     {
       //> Full, explicit form of evaluation
-      #pragma unroll
+      // #pragma unroll
       for(int i = 0; i < N; i++) {
 
         //> initialize to zero
@@ -99,7 +99,7 @@ namespace magmaHCWrapper {
         }*/
 
         //> With transpose...
-        #pragma unroll
+        // #pragma unroll
         for(int j = 0; j < max_terms; j++) {
 
           //> access the indices of parameters (should be access in a coalesced fashion)
@@ -172,7 +172,7 @@ namespace magmaHCWrapper {
                   * (s_vars[ v3_indx ]);
       }*/
 
-      #pragma unroll
+      // #pragma unroll
       for (int i = 0; i < max_terms; i++) {
 
         /*//> access the indices of parameters (should be access in a coalesced fashion)
@@ -244,7 +244,7 @@ namespace magmaHCWrapper {
                   * (s_vars[ v3_indx ]);
       }*/
 
-      #pragma unroll
+      // #pragma unroll
       for (int i = 0; i < max_terms; i++) {
 
         //> access the indices of parameters (should be access in a coalesced fashion)

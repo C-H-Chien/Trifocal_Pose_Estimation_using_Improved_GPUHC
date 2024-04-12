@@ -135,8 +135,10 @@ namespace RANSAC_Estimator {
         int tidx;
         int p1_idx, p2_idx, p3_idx;
         srand (time(NULL));
-        Number_Of_Points = views.cam1.img_points_meters.size();
-        //std::cout << Number_Of_Points << std::endl;
+        Number_Of_Points = views.cam1.img_perturbed_points_meters.size();
+        std::cout << "Number of points = " << Number_Of_Points << std::endl;
+
+        std::array<int, 3> current_matches_indices;
 
         std::cout << "Preparing target parameters ..." << std::endl;
         for (int ti = 0; ti < RANSAC_Number_Of_Iterations; ti++) {
@@ -147,6 +149,9 @@ namespace RANSAC_Estimator {
                 p3_idx = rand() % Number_Of_Points;
                 if ( (p1_idx != p2_idx) && (p1_idx != p3_idx) && (p2_idx != p3_idx) ) break;
             }
+            current_matches_indices[0] = p1_idx;
+            current_matches_indices[1] = p2_idx;
+            current_matches_indices[2] = p3_idx;
 
             (h_targetParams + ti*(pp->numOfParams+1))[0] = MAGMA_C_MAKE(views.cam1.img_perturbed_points_meters[p1_idx](0), 0.0);
             (h_targetParams + ti*(pp->numOfParams+1))[1] = MAGMA_C_MAKE(views.cam1.img_perturbed_points_meters[p1_idx](1), 0.0);
@@ -169,25 +174,27 @@ namespace RANSAC_Estimator {
             (h_targetParams + ti*(pp->numOfParams+1))[16] = MAGMA_C_MAKE(views.cam3.img_perturbed_points_meters[p3_idx](0), 0.0);
             (h_targetParams + ti*(pp->numOfParams+1))[17] = MAGMA_C_MAKE(views.cam3.img_perturbed_points_meters[p3_idx](1), 0.0);
 
-            (h_targetParams + ti*(pp->numOfParams+1))[18] = MAGMA_C_MAKE(views.cam1.img_tangents_meters[p1_idx](0), 0.0);
-            (h_targetParams + ti*(pp->numOfParams+1))[19] = MAGMA_C_MAKE(views.cam1.img_tangents_meters[p1_idx](1), 0.0);
-            (h_targetParams + ti*(pp->numOfParams+1))[20] = MAGMA_C_MAKE(views.cam2.img_tangents_meters[p1_idx](0), 0.0);
-            (h_targetParams + ti*(pp->numOfParams+1))[21] = MAGMA_C_MAKE(views.cam2.img_tangents_meters[p1_idx](1), 0.0);
-            (h_targetParams + ti*(pp->numOfParams+1))[22] = MAGMA_C_MAKE(views.cam3.img_tangents_meters[p1_idx](0), 0.0);
-            (h_targetParams + ti*(pp->numOfParams+1))[23] = MAGMA_C_MAKE(views.cam3.img_tangents_meters[p1_idx](1), 0.0);
+            (h_targetParams + ti*(pp->numOfParams+1))[18] = MAGMA_C_MAKE(views.cam1.img_perturbed_tangents_meters[p1_idx](0), 0.0);
+            (h_targetParams + ti*(pp->numOfParams+1))[19] = MAGMA_C_MAKE(views.cam1.img_perturbed_tangents_meters[p1_idx](1), 0.0);
+            (h_targetParams + ti*(pp->numOfParams+1))[20] = MAGMA_C_MAKE(views.cam2.img_perturbed_tangents_meters[p1_idx](0), 0.0);
+            (h_targetParams + ti*(pp->numOfParams+1))[21] = MAGMA_C_MAKE(views.cam2.img_perturbed_tangents_meters[p1_idx](1), 0.0);
+            (h_targetParams + ti*(pp->numOfParams+1))[22] = MAGMA_C_MAKE(views.cam3.img_perturbed_tangents_meters[p1_idx](0), 0.0);
+            (h_targetParams + ti*(pp->numOfParams+1))[23] = MAGMA_C_MAKE(views.cam3.img_perturbed_tangents_meters[p1_idx](1), 0.0);
 
-            (h_targetParams + ti*(pp->numOfParams+1))[24] = MAGMA_C_MAKE(views.cam1.img_tangents_meters[p2_idx](0), 0.0);
-            (h_targetParams + ti*(pp->numOfParams+1))[25] = MAGMA_C_MAKE(views.cam1.img_tangents_meters[p2_idx](1), 0.0);
-            (h_targetParams + ti*(pp->numOfParams+1))[26] = MAGMA_C_MAKE(views.cam2.img_tangents_meters[p2_idx](0), 0.0);
-            (h_targetParams + ti*(pp->numOfParams+1))[27] = MAGMA_C_MAKE(views.cam2.img_tangents_meters[p2_idx](1), 0.0);
-            (h_targetParams + ti*(pp->numOfParams+1))[28] = MAGMA_C_MAKE(views.cam3.img_tangents_meters[p2_idx](0), 0.0);
-            (h_targetParams + ti*(pp->numOfParams+1))[29] = MAGMA_C_MAKE(views.cam3.img_tangents_meters[p2_idx](1), 0.0);
+            (h_targetParams + ti*(pp->numOfParams+1))[24] = MAGMA_C_MAKE(views.cam1.img_perturbed_tangents_meters[p2_idx](0), 0.0);
+            (h_targetParams + ti*(pp->numOfParams+1))[25] = MAGMA_C_MAKE(views.cam1.img_perturbed_tangents_meters[p2_idx](1), 0.0);
+            (h_targetParams + ti*(pp->numOfParams+1))[26] = MAGMA_C_MAKE(views.cam2.img_perturbed_tangents_meters[p2_idx](0), 0.0);
+            (h_targetParams + ti*(pp->numOfParams+1))[27] = MAGMA_C_MAKE(views.cam2.img_perturbed_tangents_meters[p2_idx](1), 0.0);
+            (h_targetParams + ti*(pp->numOfParams+1))[28] = MAGMA_C_MAKE(views.cam3.img_perturbed_tangents_meters[p2_idx](0), 0.0);
+            (h_targetParams + ti*(pp->numOfParams+1))[29] = MAGMA_C_MAKE(views.cam3.img_perturbed_tangents_meters[p2_idx](1), 0.0);
 
             (h_targetParams + ti*(pp->numOfParams+1))[30] = MAGMA_C_MAKE(1.0, 0.0);
             (h_targetParams + ti*(pp->numOfParams+1))[31] = MAGMA_C_MAKE(1.0, 0.0);
             (h_targetParams + ti*(pp->numOfParams+1))[32] = MAGMA_C_MAKE(1.0, 0.0);
 
             (h_targetParams + ti*(pp->numOfParams+1))[33] = MAGMA_C_MAKE(1.0, 0.0);
+
+            target_params_match_indices.push_back( current_matches_indices );
 
             //std::cout << "Target parameters #" << ti << std::endl;
             //magma_cprint(pp->numOfParams+1, 1, h_targetParams+ti*(pp->numOfParams+1), (pp->numOfParams+1));
@@ -256,33 +263,27 @@ namespace RANSAC_Estimator {
         }
     }
 
-    void RANSAC_System_MB::Push_Block_Cycle_Time()
-    {
-        float block_time = 0.0;
-        for (int ri = 0; ri < MULTIPLES_OF_TRACKING_PER_WARP; ri++) {
+    
 
-            //> Loop over all paths, push back block cycle time if the HC solution does not go infinity
-            for (int bs = 0; bs < batchCount; bs++) {
-                block_time = (host_clk_data + ri*batchCount)[bs] / (float)peak_clk;
-                //if (block_time > 0.0) {
-                    all_Block_Cycle_Times.push_back(block_time);
-                //}
-            }
-        }
-    }
-
-    void RANSAC_System_MB::Transform_Solutions_To_Relative_Poses( TrifocalViewsWrapper::Trifocal_Views views ) 
+    void RANSAC_System_MB::Transform_Solutions_To_Relative_Poses( TrifocalViewsWrapper::Trifocal_Views views, magmaHCWrapper::Problem_Params* pp ) 
     {
         MultiviewGeometryUtil::multiview_geometry_util mg_util;
         float norm_t21, norm_t31;
         Eigen::Vector3d T21_;
         Eigen::Vector3d T31_;
+        int RANSAC_loop_index;
+
+        //std::cout << "Number of target params: " << target_params_match_indices.size() << std::endl;
+        //std::cout << "Number of Batches: " << batchCount << std::endl;
 
         //> Loop over all RANSAC iterations
         for (int ri = 0; ri < MULTIPLES_OF_TRACKING_PER_WARP; ri++) {
 
             //> Loop over all paths
             for (int bs = 0; bs < batchCount; bs++) {
+
+                //> Current RANSAC loop index
+                RANSAC_loop_index = std::floor(bs / ( pp->numOfTracks ));
                 
                 if (MAGMA_C_REAL((h_path_converge_flag + ri*batchCount)[bs]) == 1) {
 
@@ -291,86 +292,101 @@ namespace RANSAC_Estimator {
                     for (int vi = 0; vi < 6; vi++) {
                         if ( fabs(MAGMA_C_IMAG((h_track_sols + ri*batchCount*(N+1) + bs * (N+1))[24 + vi])) < IMAG_PART_TOL ) small_imag_part_counter++;
                     }
+                    if ( small_imag_part_counter < 6 ) continue;
+
+                    //> Check whether the depths are all positive
+                    int positive_depth_counter = 0;
+                    for (int di = 0; di < 8; di++) {
+                        if ( MAGMA_C_REAL((h_track_sols + ri*batchCount*(N+1) + bs * (N+1))[di]) >= 0 ) positive_depth_counter++;
+                    }
+                    if (positive_depth_counter < 8) continue;
 
                     //> Pick the solution if all the imaginary parts of the two relative rotations are small enough
-                    if ( small_imag_part_counter == 6 ) {
+                    #if TEST_COLLECT_HC_STEPS
+                    real_solution_hc_steps.push_back( MAGMA_C_IMAG((h_path_converge_flag + ri*batchCount)[bs]) );
+                    #endif
 
-                        #if TEST_COLLECT_HC_STEPS
-                        real_solution_hc_steps.push_back( MAGMA_C_IMAG((h_path_converge_flag + ri*batchCount)[bs]) );
-                        #endif
+                    #if TEST_ALL_POSITIVE_DEPTHS_AT_END_ZONE
+                    t_when_depths_are_positive.push_back( MAGMA_C_IMAG((h_path_converge_flag + ri*batchCount)[bs]) );
+                    #endif
 
-                        #if TEST_ALL_POSITIVE_DEPTHS_AT_END_ZONE
-                        t_when_depths_are_positive.push_back( MAGMA_C_IMAG((h_path_converge_flag + ri*batchCount)[bs]) );
-                        #endif
+                    /*std::vector<float> vec_Depths_real;
+                    std::vector<float> vec_Depths_imag;
+                    vec_Depths_real.push_back( MAGMA_C_REAL((h_track_sols + ri*batchCount*(N+1) + bs * (N+1))[0]) );
+                    vec_Depths_imag.push_back( MAGMA_C_IMAG((h_track_sols + ri*batchCount*(N+1) + bs * (N+1))[0]) );
+                    vec_Depths_real.push_back( MAGMA_C_REAL((h_track_sols + ri*batchCount*(N+1) + bs * (N+1))[1]) );
+                    vec_Depths_imag.push_back( MAGMA_C_IMAG((h_track_sols + ri*batchCount*(N+1) + bs * (N+1))[1]) );
+                    vec_Depths_real.push_back( MAGMA_C_REAL((h_track_sols + ri*batchCount*(N+1) + bs * (N+1))[2]) );
+                    vec_Depths_imag.push_back( MAGMA_C_IMAG((h_track_sols + ri*batchCount*(N+1) + bs * (N+1))[2]) );
+                    vec_Depths_real.push_back( MAGMA_C_REAL((h_track_sols + ri*batchCount*(N+1) + bs * (N+1))[3]) );
+                    vec_Depths_imag.push_back( MAGMA_C_IMAG((h_track_sols + ri*batchCount*(N+1) + bs * (N+1))[3]) );
+                    vec_Depths_real.push_back( MAGMA_C_REAL((h_track_sols + ri*batchCount*(N+1) + bs * (N+1))[4]) );
+                    vec_Depths_imag.push_back( MAGMA_C_IMAG((h_track_sols + ri*batchCount*(N+1) + bs * (N+1))[4]) );
+                    vec_Depths_real.push_back( MAGMA_C_REAL((h_track_sols + ri*batchCount*(N+1) + bs * (N+1))[5]) );
+                    vec_Depths_imag.push_back( MAGMA_C_IMAG((h_track_sols + ri*batchCount*(N+1) + bs * (N+1))[5]) );
+                    vec_Depths_real.push_back( MAGMA_C_REAL((h_track_sols + ri*batchCount*(N+1) + bs * (N+1))[6]) );
+                    vec_Depths_imag.push_back( MAGMA_C_IMAG((h_track_sols + ri*batchCount*(N+1) + bs * (N+1))[6]) );
+                    vec_Depths_real.push_back( MAGMA_C_REAL((h_track_sols + ri*batchCount*(N+1) + bs * (N+1))[7]) );
+                    vec_Depths_imag.push_back( MAGMA_C_IMAG((h_track_sols + ri*batchCount*(N+1) + bs * (N+1))[7]) );
+                    Depths_real.push_back(vec_Depths_real);
+                    Depths_imag.push_back(vec_Depths_imag);*/
 
-                        /*std::vector<float> vec_Depths_real;
-                        std::vector<float> vec_Depths_imag;
-                        vec_Depths_real.push_back( MAGMA_C_REAL((h_track_sols + ri*batchCount*(N+1) + bs * (N+1))[0]) );
-                        vec_Depths_imag.push_back( MAGMA_C_IMAG((h_track_sols + ri*batchCount*(N+1) + bs * (N+1))[0]) );
-                        vec_Depths_real.push_back( MAGMA_C_REAL((h_track_sols + ri*batchCount*(N+1) + bs * (N+1))[1]) );
-                        vec_Depths_imag.push_back( MAGMA_C_IMAG((h_track_sols + ri*batchCount*(N+1) + bs * (N+1))[1]) );
-                        vec_Depths_real.push_back( MAGMA_C_REAL((h_track_sols + ri*batchCount*(N+1) + bs * (N+1))[2]) );
-                        vec_Depths_imag.push_back( MAGMA_C_IMAG((h_track_sols + ri*batchCount*(N+1) + bs * (N+1))[2]) );
-                        vec_Depths_real.push_back( MAGMA_C_REAL((h_track_sols + ri*batchCount*(N+1) + bs * (N+1))[3]) );
-                        vec_Depths_imag.push_back( MAGMA_C_IMAG((h_track_sols + ri*batchCount*(N+1) + bs * (N+1))[3]) );
-                        vec_Depths_real.push_back( MAGMA_C_REAL((h_track_sols + ri*batchCount*(N+1) + bs * (N+1))[4]) );
-                        vec_Depths_imag.push_back( MAGMA_C_IMAG((h_track_sols + ri*batchCount*(N+1) + bs * (N+1))[4]) );
-                        vec_Depths_real.push_back( MAGMA_C_REAL((h_track_sols + ri*batchCount*(N+1) + bs * (N+1))[5]) );
-                        vec_Depths_imag.push_back( MAGMA_C_IMAG((h_track_sols + ri*batchCount*(N+1) + bs * (N+1))[5]) );
-                        vec_Depths_real.push_back( MAGMA_C_REAL((h_track_sols + ri*batchCount*(N+1) + bs * (N+1))[6]) );
-                        vec_Depths_imag.push_back( MAGMA_C_IMAG((h_track_sols + ri*batchCount*(N+1) + bs * (N+1))[6]) );
-                        vec_Depths_real.push_back( MAGMA_C_REAL((h_track_sols + ri*batchCount*(N+1) + bs * (N+1))[7]) );
-                        vec_Depths_imag.push_back( MAGMA_C_IMAG((h_track_sols + ri*batchCount*(N+1) + bs * (N+1))[7]) );
-                        Depths_real.push_back(vec_Depths_real);
-                        Depths_imag.push_back(vec_Depths_imag);*/
+                    for (int di = 0; di < 18; di++) depths[di] = MAGMA_C_REAL((h_track_sols + ri*batchCount*(N+1) + bs * (N+1))[di]);
+                    Depths_Sols.push_back( depths );
 
-                        //> First normalize the translation part
-                        //> T21
-                        t21(0) = MAGMA_C_REAL((h_track_sols + ri*batchCount*(N+1) + bs * (N+1))[18]);
-                        t21(1) = MAGMA_C_REAL((h_track_sols + ri*batchCount*(N+1) + bs * (N+1))[19]);
-                        t21(2) = MAGMA_C_REAL((h_track_sols + ri*batchCount*(N+1) + bs * (N+1))[20]);
-                        T21_ = mg_util.Normalize_Translation_Vector( t21 );
-                        normalized_t21.push_back( T21_ );
-                        
-                        //> T31
-                        t31(0) = MAGMA_C_REAL((h_track_sols + ri*batchCount*(N+1) + bs * (N+1))[21]);
-                        t31(1) = MAGMA_C_REAL((h_track_sols + ri*batchCount*(N+1) + bs * (N+1))[22]);
-                        t31(2) = MAGMA_C_REAL((h_track_sols + ri*batchCount*(N+1) + bs * (N+1))[23]);
-                        T31_ = mg_util.Normalize_Translation_Vector( t31 );
-                        normalized_t31.push_back( T31_ );
-                        
-                        //> R21
-                        r21(0) = MAGMA_C_REAL((h_track_sols + ri*batchCount*(N+1) + bs * (N+1))[24]);
-                        r21(1) = MAGMA_C_REAL((h_track_sols + ri*batchCount*(N+1) + bs * (N+1))[25]);
-                        r21(2) = MAGMA_C_REAL((h_track_sols + ri*batchCount*(N+1) + bs * (N+1))[26]);
-                        R21.push_back( mg_util.Cayley_To_Rotation_Matrix( r21 ) );
+                    //> First normalize the translation part
+                    //> T21
+                    t21(0) = MAGMA_C_REAL((h_track_sols + ri*batchCount*(N+1) + bs * (N+1))[18]);
+                    t21(1) = MAGMA_C_REAL((h_track_sols + ri*batchCount*(N+1) + bs * (N+1))[19]);
+                    t21(2) = MAGMA_C_REAL((h_track_sols + ri*batchCount*(N+1) + bs * (N+1))[20]);
+                    T21_ = mg_util.Normalize_Translation_Vector( t21 );
+                    normalized_t21.push_back( T21_ );
+                    unnormalized_t21.push_back( t21 );
+                    
+                    //> T31
+                    t31(0) = MAGMA_C_REAL((h_track_sols + ri*batchCount*(N+1) + bs * (N+1))[21]);
+                    t31(1) = MAGMA_C_REAL((h_track_sols + ri*batchCount*(N+1) + bs * (N+1))[22]);
+                    t31(2) = MAGMA_C_REAL((h_track_sols + ri*batchCount*(N+1) + bs * (N+1))[23]);
+                    T31_ = mg_util.Normalize_Translation_Vector( t31 );
+                    normalized_t31.push_back( T31_ );
+                    unnormalized_t31.push_back( t31 );
+                    
+                    //> R21
+                    r21(0) = MAGMA_C_REAL((h_track_sols + ri*batchCount*(N+1) + bs * (N+1))[24]);
+                    r21(1) = MAGMA_C_REAL((h_track_sols + ri*batchCount*(N+1) + bs * (N+1))[25]);
+                    r21(2) = MAGMA_C_REAL((h_track_sols + ri*batchCount*(N+1) + bs * (N+1))[26]);
+                    R21.push_back( mg_util.Cayley_To_Rotation_Matrix( r21 ) );
+                    cayley_vars_r21.push_back( r21 );
 
-                        //> R31
-                        r31(0) = MAGMA_C_REAL((h_track_sols + ri*batchCount*(N+1) + bs * (N+1))[27]);
-                        r31(1) = MAGMA_C_REAL((h_track_sols + ri*batchCount*(N+1) + bs * (N+1))[28]);
-                        r31(2) = MAGMA_C_REAL((h_track_sols + ri*batchCount*(N+1) + bs * (N+1))[29]);
-                        R31.push_back( mg_util.Cayley_To_Rotation_Matrix( r31 ) );
+                    //> R31
+                    r31(0) = MAGMA_C_REAL((h_track_sols + ri*batchCount*(N+1) + bs * (N+1))[27]);
+                    r31(1) = MAGMA_C_REAL((h_track_sols + ri*batchCount*(N+1) + bs * (N+1))[28]);
+                    r31(2) = MAGMA_C_REAL((h_track_sols + ri*batchCount*(N+1) + bs * (N+1))[29]);
+                    R31.push_back( mg_util.Cayley_To_Rotation_Matrix( r31 ) );
+                    cayley_vars_r31.push_back( r31 );
 
-                        //> Essential Matrices
-                        E21.push_back( mg_util.getEssentialMatrix( R21.back(), normalized_t21.back()) );
-                        E31.push_back( mg_util.getEssentialMatrix( R31.back(), normalized_t31.back()) );
+                    //> Essential Matrices
+                    E21.push_back( mg_util.getEssentialMatrix( R21.back(), normalized_t21.back()) );
+                    E31.push_back( mg_util.getEssentialMatrix( R31.back(), normalized_t31.back()) );
 
-                        //> Fundamental Matrices
-                        F21.push_back( mg_util.getFundamentalMatrix( views.inv_K, R21.back(), normalized_t21.back()) );
-                        F31.push_back( mg_util.getFundamentalMatrix( views.inv_K, R31.back(), normalized_t31.back()) );
+                    //> Fundamental Matrices
+                    F21.push_back( mg_util.getFundamentalMatrix( views.inv_K, R21.back(), normalized_t21.back()) );
+                    F31.push_back( mg_util.getFundamentalMatrix( views.inv_K, R31.back(), normalized_t31.back()) );
 
-                        /*if (fabs(fabs(r31(2)) - 0.49545) < 0.01 ) {
-                            std::cout << r21(0) << std::endl << r21(1) << std::endl << r21(2) << std::endl;
-                            std::cout << r31(0) << std::endl << r31(1) << std::endl << r31(2) << std::endl;
-                            std::cout << "(ri, bs, Index) = (" << ri << ", " << bs << ", " << F31.size() << ")" << std::endl;
-                            std::cout << std::endl;
-                            std::cout << R21[R21.size()-1] << std::endl << std::endl;
-                            //std::cout << R21.back() << std::endl;
-                            std::cout << T21_ << std::endl << std::endl;
-                            std::cout << F21[F21.size()-1] << std::endl << std::endl;
-                            std::cout << F31.back() << std::endl << std::endl;
-                        }*/
-                    }
+                    //> Match indices for the candidate estimated pose
+                    candidate_match_indices.push_back( target_params_match_indices[RANSAC_loop_index] );
+
+                    /*if (fabs(fabs(r31(2)) - 0.49545) < 0.01 ) {
+                        std::cout << r21(0) << std::endl << r21(1) << std::endl << r21(2) << std::endl;
+                        std::cout << r31(0) << std::endl << r31(1) << std::endl << r31(2) << std::endl;
+                        std::cout << "(ri, bs, Index) = (" << ri << ", " << bs << ", " << F31.size() << ")" << std::endl;
+                        std::cout << std::endl;
+                        std::cout << R21[R21.size()-1] << std::endl << std::endl;
+                        //std::cout << R21.back() << std::endl;
+                        std::cout << T21_ << std::endl << std::endl;
+                        std::cout << F21[F21.size()-1] << std::endl << std::endl;
+                        std::cout << F31.back() << std::endl << std::endl;
+                    }*/
                 }
             }
         }
@@ -395,6 +411,8 @@ namespace RANSAC_Estimator {
 
         //> Loop over all poses
         for (int si = 0; si < F21.size(); si++) {
+            //> Flsuh out the inlier indices stack
+            temp_inlier_indices.clear();
 
             Number_Of_Inliers = 0;
             //> Loop over all correspondences
@@ -433,11 +451,13 @@ namespace RANSAC_Estimator {
 
                 if ( dist_21 <= SAMPSON_ERROR_THRESH && dist_31 <= SAMPSON_ERROR_THRESH ) {
                     Number_Of_Inliers++;
+                    temp_inlier_indices.push_back(pi);
                 }
             }
             if ( Number_Of_Inliers > Maximal_Number_of_Inliers ) {
                 Maximal_Number_of_Inliers = Number_Of_Inliers;
                 Pose_Index_with_Maximal_Number_of_Inliers = si;
+                final_inlier_indices = temp_inlier_indices;
             }
 
             #if TEST_COLLECT_HC_STEPS
@@ -469,6 +489,16 @@ namespace RANSAC_Estimator {
             #endif
         }
 
+        //> Export the final pose information
+        std::cout << "Exporting final pose information ..." << std::endl;
+        Final_Number_of_Inliers = Maximal_Number_of_Inliers;
+        final_match_indices     = candidate_match_indices[ Pose_Index_with_Maximal_Number_of_Inliers ];
+        final_unnormalized_t21  = unnormalized_t21[ Pose_Index_with_Maximal_Number_of_Inliers ];
+        final_unnormalized_t31  = unnormalized_t31[ Pose_Index_with_Maximal_Number_of_Inliers ];
+        final_unnormalized_r21  = cayley_vars_r21[ Pose_Index_with_Maximal_Number_of_Inliers ];
+        final_unnormalized_r31  = cayley_vars_r31[ Pose_Index_with_Maximal_Number_of_Inliers ];
+        final_depths            = Depths_Sols[ Pose_Index_with_Maximal_Number_of_Inliers ];
+        
         //> Assign final RANSAC solution
         final_R21 = R21[ Pose_Index_with_Maximal_Number_of_Inliers ];
         final_R31 = R31[ Pose_Index_with_Maximal_Number_of_Inliers ];
@@ -511,10 +541,10 @@ namespace RANSAC_Estimator {
         T31_Residual = Transl_GT_31 - final_T31;
 
         //> Store by stacking all residuals
-        Stacked_R21_Residuals.push_back(R21_Residual);
-        Stacked_R31_Residuals.push_back(R31_Residual);
-        Stacked_T21_Residuals.push_back(T21_Residual);
-        Stacked_T31_Residuals.push_back(T31_Residual);
+        //Stacked_R21_Residuals.push_back(R21_Residual);
+        //Stacked_R31_Residuals.push_back(R31_Residual);
+        //Stacked_T21_Residuals.push_back(T21_Residual);
+        //Stacked_T31_Residuals.push_back(T31_Residual);
 
         #if DEBUG
         std::cout << "> Euler angles residual for R21: " << std::endl << R21_Residual << std::endl;
@@ -577,6 +607,19 @@ namespace RANSAC_Estimator {
         printf("============== GPU time (ms) ==============\n");
         printf("%7.2f (ms)\n", (gpu_time)*1000);
         printf("===========================================\n\n");
+    }
+
+    void RANSAC_System_MB::Push_Block_Cycle_Time()
+    {
+        float block_time = 0.0;
+        for (int ri = 0; ri < MULTIPLES_OF_TRACKING_PER_WARP; ri++) {
+
+            //> Loop over all paths, push back block cycle time if the HC solution does not go infinity
+            for (int bs = 0; bs < batchCount; bs++) {
+                block_time = (host_clk_data + ri*batchCount)[bs] / (float)peak_clk;
+                all_Block_Cycle_Times.push_back(block_time);
+            }
+        }
     }
 
     void RANSAC_System_MB::Free_Memories() 

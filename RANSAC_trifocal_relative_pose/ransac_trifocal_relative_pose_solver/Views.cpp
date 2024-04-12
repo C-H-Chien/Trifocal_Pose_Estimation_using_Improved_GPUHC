@@ -30,26 +30,11 @@
 
 namespace TrifocalViewsWrapper {
     
-    //extern "C"
+    //> Constructor: Use Synthetic curve dataset
     Trifocal_Views::Trifocal_Views(
-        int cam1_idx, int cam2_idx, int cam3_idx, 
-        int curve1_idx, int curve2_idx, int curve3_idx, 
-        std::string dataset_dir)
-    :View1_Index(cam1_idx), View2_Index(cam2_idx), View3_Index(cam3_idx), 
-     Curve1_Index(curve1_idx), Curve2_Index(curve2_idx), Curve3_Index(curve3_idx),
-     Dataset_Path(dataset_dir) 
+        int cam1_idx, int cam2_idx, int cam3_idx,  std::string dataset_dir)
+    :View1_Index(cam1_idx), View2_Index(cam2_idx), View3_Index(cam3_idx), Dataset_Path(dataset_dir) 
      {
-        //> Calibration matrix
-        /*K(0,0) = 2584.932509819502; //> fx
-        K(0,1) = 0;
-        K(0,2) = 249.771375872214;  //> cx
-        K(1,0) = 0;
-        K(1,1) = 2584.791860605769; //> fy
-        K(1,2) = 278.312679379194;  //> cy
-        K(2,0) = 0;
-        K(2,1) = 0;
-        K(2,2) = 0;*/
-
         int n_zero = 4;
         View1_Indx_Str = std::string(n_zero - std::min(n_zero, (int)(std::to_string(View1_Index).length())), '0') + std::to_string(View1_Index);
         View2_Indx_Str = std::string(n_zero - std::min(n_zero, (int)(std::to_string(View2_Index).length())), '0') + std::to_string(View2_Index);
@@ -68,7 +53,137 @@ namespace TrifocalViewsWrapper {
         }
     }
 
-    //extern "C"
+    //> Constructor: Use arbitrary dataset with triplet matches
+    Trifocal_Views::Trifocal_Views( int instance, std::string dataset_dir )
+    :Target_Instance(instance), Dataset_Path(dataset_dir) 
+    {
+        int n_zero = 4;
+        triplet_instance = std::string(n_zero - std::min(n_zero, (int)(std::to_string(instance).length())), '0') + std::to_string(instance);
+
+        //> Initialize the calibration matrix as an identity matrix   
+        K = Eigen::Matrix3d::Identity();
+    }
+
+    //> For arbitrary dataset with triplet matches
+    void Trifocal_Views::Read_In_Dataset_with_Triplet_Matches_CameraMatrices() {
+        //> Set path to read triplet camera poses and their calibration matrix
+        std::string Triplet_Views_CameraMatrix_Path = Dataset_Path + "CupDataset_Triplet_Poses/triplet_poses_" + triplet_instance + ".txt";
+        
+        //> Read in data for triplet extrinsic and intrinsic matrices
+        double fx, fy, cx, cy;
+        std::fstream Triplet_Poses_File;
+        Triplet_Poses_File.open( Triplet_Views_CameraMatrix_Path, std::ios_base::in );
+        if (!Triplet_Poses_File) { std::cerr << "Path " << Triplet_Views_CameraMatrix_Path << " does not exist. \n"; exit(1); }
+        else {
+            Triplet_Poses_File >> cam1.abs_R(0,0) >> cam1.abs_R(0,1) >> cam1.abs_R(0,2);
+            Triplet_Poses_File >> cam1.abs_R(1,0) >> cam1.abs_R(1,1) >> cam1.abs_R(1,2);
+            Triplet_Poses_File >> cam1.abs_R(2,0) >> cam1.abs_R(2,1) >> cam1.abs_R(2,2);
+            Triplet_Poses_File >> cam1.abs_C(0) >> cam1.abs_C(1) >> cam1.abs_C(2);
+
+            Triplet_Poses_File >> cam2.abs_R(0,0) >> cam2.abs_R(0,1) >> cam2.abs_R(0,2);
+            Triplet_Poses_File >> cam2.abs_R(1,0) >> cam2.abs_R(1,1) >> cam2.abs_R(1,2);
+            Triplet_Poses_File >> cam2.abs_R(2,0) >> cam2.abs_R(2,1) >> cam2.abs_R(2,2);
+            Triplet_Poses_File >> cam2.abs_C(0) >> cam2.abs_C(1) >> cam2.abs_C(2);
+
+            Triplet_Poses_File >> cam3.abs_R(0,0) >> cam3.abs_R(0,1) >> cam3.abs_R(0,2);
+            Triplet_Poses_File >> cam3.abs_R(1,0) >> cam3.abs_R(1,1) >> cam3.abs_R(1,2);
+            Triplet_Poses_File >> cam3.abs_R(2,0) >> cam3.abs_R(2,1) >> cam3.abs_R(2,2);
+            Triplet_Poses_File >> cam3.abs_C(0) >> cam3.abs_C(1) >> cam3.abs_C(2);
+
+            Triplet_Poses_File >> fx >> fy >> cx >> cy;
+        }
+        //> Compute the translation vector for view 1
+        cam1.abs_T = -cam1.abs_R * cam1.abs_C;
+        cam2.abs_T = -cam2.abs_R * cam2.abs_C;
+        cam3.abs_T = -cam3.abs_R * cam3.abs_C;
+
+        K(0,0) = fx;
+        K(0,2) = cx;
+        K(1,1) = fy;
+        K(1,2) = cy;
+        
+        //> Get the inverse of the calibration matrix
+        inv_K = K.inverse();
+    }
+
+    //> For arbitrary dataset with triplet matches
+    void Trifocal_Views::Read_In_Triplet_Matches() {
+        //> Set path to read target parameters
+        std::string Instance_Triplet_Matches_Path = Dataset_Path + "CupDataset_Triplet_Matches/triplet_data_" + triplet_instance + ".txt";
+        
+        //> Read in target parameters for the current instance
+        std::fstream Triplet_Matches_File;
+        Triplet_Matches_File.open( Instance_Triplet_Matches_Path, std::ios_base::in );
+        if (!Triplet_Matches_File) { std::cerr << "Path " << Instance_Triplet_Matches_Path << " does not exist. \n"; exit(1); }
+        else {
+            double readin_val;
+            std::array<double, 12> readin_triplet_match_data;
+            while ( Triplet_Matches_File >> readin_val ) {
+                readin_triplet_match_data[0] = readin_val;
+                for (int i = 1; i < 12; i++) {
+                    Triplet_Matches_File >> readin_val;
+                    readin_triplet_match_data[i] = readin_val;
+                }
+                
+                Structured_Triplet_Matches.push_back( readin_triplet_match_data );
+            }
+        }
+        Eigen::Vector3d p1h_in_pixels, p2h_in_pixels, p3h_in_pixels;
+        Eigen::Vector3d t1h_in_pixels, t2h_in_pixels, t3h_in_pixels;
+
+        //> Loop over all triplet matches
+        for (int ti = 0; ti < Structured_Triplet_Matches.size(); ti++) {
+            //> Loop over triplet point correspondences across three views
+            Eigen::Vector2d img1_location_in_meters{ Structured_Triplet_Matches[ti][0], Structured_Triplet_Matches[ti][1] };
+            cam1.img_perturbed_points_meters.push_back( img1_location_in_meters );
+            Eigen::Vector2d img2_location_in_meters{ Structured_Triplet_Matches[ti][2], Structured_Triplet_Matches[ti][3] };
+            cam2.img_perturbed_points_meters.push_back( img2_location_in_meters );
+            Eigen::Vector2d img3_location_in_meters{ Structured_Triplet_Matches[ti][4], Structured_Triplet_Matches[ti][5] };
+            cam3.img_perturbed_points_meters.push_back( img3_location_in_meters );
+
+            //> Loop over triplet tangent correspondences across three views
+            Eigen::Vector2d img1_tangent_in_meters{ Structured_Triplet_Matches[ti][6], Structured_Triplet_Matches[ti][7] };
+            cam1.img_perturbed_tangents_meters.push_back( img1_tangent_in_meters );
+            Eigen::Vector2d img2_tangent_in_meters{ Structured_Triplet_Matches[ti][8], Structured_Triplet_Matches[ti][9] };
+            cam2.img_perturbed_tangents_meters.push_back( img2_tangent_in_meters );
+            Eigen::Vector2d img3_tangent_in_meters{ Structured_Triplet_Matches[ti][10], Structured_Triplet_Matches[ti][11] };
+            cam3.img_perturbed_tangents_meters.push_back( img3_tangent_in_meters );
+
+            //> Convert from meters to pixels for RANSAC hypothesis validation purpose
+            Eigen::Vector3d p1h_in_meters{ Structured_Triplet_Matches[ti][0],  Structured_Triplet_Matches[ti][1],  1.0 };
+            Eigen::Vector3d p2h_in_meters{ Structured_Triplet_Matches[ti][2],  Structured_Triplet_Matches[ti][3],  1.0 };
+            Eigen::Vector3d p3h_in_meters{ Structured_Triplet_Matches[ti][4],  Structured_Triplet_Matches[ti][5],  1.0 };
+            Eigen::Vector3d t1h_in_meters{ Structured_Triplet_Matches[ti][6],  Structured_Triplet_Matches[ti][7],  0.0 };
+            Eigen::Vector3d t2h_in_meters{ Structured_Triplet_Matches[ti][8],  Structured_Triplet_Matches[ti][9],  0.0 };
+            Eigen::Vector3d t3h_in_meters{ Structured_Triplet_Matches[ti][10], Structured_Triplet_Matches[ti][11], 0.0 };
+            p1h_in_pixels = K * p1h_in_meters;
+            p2h_in_pixels = K * p2h_in_meters;
+            p3h_in_pixels = K * p3h_in_meters;
+            t1h_in_pixels = K * t1h_in_meters;
+            t2h_in_pixels = K * t2h_in_meters;
+            t3h_in_pixels = K * t3h_in_meters;
+            Eigen::Vector2d img1_location_in_pixels{ p1h_in_pixels(0), p1h_in_pixels(1) };
+            Eigen::Vector2d img2_location_in_pixels{ p2h_in_pixels(0), p2h_in_pixels(1) };
+            Eigen::Vector2d img3_location_in_pixels{ p3h_in_pixels(0), p3h_in_pixels(1) };
+            Eigen::Vector2d img1_tangent_in_pixels{ t1h_in_pixels(0), t1h_in_pixels(1) };
+            Eigen::Vector2d img2_tangent_in_pixels{ t2h_in_pixels(0), t2h_in_pixels(1) };
+            Eigen::Vector2d img3_tangent_in_pixels{ t3h_in_pixels(0), t3h_in_pixels(1) };
+
+            cam1.img_perturbed_points_pixels.push_back( img1_location_in_pixels );
+            cam2.img_perturbed_points_pixels.push_back( img2_location_in_pixels );
+            cam3.img_perturbed_points_pixels.push_back( img3_location_in_pixels );
+            cam1.img_perturbed_tangents_pixels.push_back( img1_tangent_in_pixels );
+            cam2.img_perturbed_tangents_pixels.push_back( img2_tangent_in_pixels );
+            cam3.img_perturbed_tangents_pixels.push_back( img3_tangent_in_pixels );
+        }
+
+        #if TRIPLET_MATCHES_DEBUG
+        int tp_indx = 1;
+        std::cout << "Test read-in triplet matches of instance " << Target_Instance << " at index " << tp_indx << ":" << std::endl;
+        for (int i = 0; i < 12; i++) std::cout << Structured_Triplet_Matches[tp_indx][i] << std::endl;
+        #endif
+    }
+
     void Trifocal_Views::Read_In_Dataset_ImagePoints() {
         //> Set path to read image 2D points
         std::string View1_Points2D_Path = Dataset_Path + "frame_" + View1_Indx_Str + "-pts-2D.txt";
@@ -85,12 +200,6 @@ namespace TrifocalViewsWrapper {
             while ( View1_Points2D_File >> subpix_x >> subpix_y ) {
                 Eigen::Vector2d subpix_Curve_Point2D{subpix_x, subpix_y};
                 cam1.img_points_pixels.push_back(subpix_Curve_Point2D);
-
-                //> Push the image curve points (three curves) on view 1
-                //if ( Curve_Index_Collection_List[readin_counter] == Curve1_Index ) cam1.img_points_pixels_on_curve[0].push_back(subpix_Curve_Point2D);
-                //if ( Curve_Index_Collection_List[readin_counter] == Curve2_Index ) cam1.img_points_pixels_on_curve[1].push_back(subpix_Curve_Point2D);
-                //if ( Curve_Index_Collection_List[readin_counter] == Curve3_Index ) cam1.img_points_pixels_on_curve[2].push_back(subpix_Curve_Point2D);
-                //readin_counter++;
             }
         }
 
@@ -103,12 +212,6 @@ namespace TrifocalViewsWrapper {
             while ( View2_Points2D_File >> subpix_x >> subpix_y ) {
                 Eigen::Vector2d subpix_Curve_Point2D{subpix_x, subpix_y};
                 cam2.img_points_pixels.push_back(subpix_Curve_Point2D);
-
-                //> Push the image curve points (three curves) on view 2
-                //if ( Curve_Index_Collection_List[readin_counter] == Curve1_Index ) cam2.img_points_pixels_on_curve[0].push_back(subpix_Curve_Point2D);
-                //if ( Curve_Index_Collection_List[readin_counter] == Curve2_Index ) cam2.img_points_pixels_on_curve[1].push_back(subpix_Curve_Point2D);
-                //if ( Curve_Index_Collection_List[readin_counter] == Curve3_Index ) cam2.img_points_pixels_on_curve[2].push_back(subpix_Curve_Point2D);
-                //readin_counter++;
             }
         }
 
@@ -121,17 +224,10 @@ namespace TrifocalViewsWrapper {
             while ( View3_Points2D_File >> subpix_x >> subpix_y ) {
                 Eigen::Vector2d subpix_Curve_Point2D{subpix_x, subpix_y};
                 cam3.img_points_pixels.push_back(subpix_Curve_Point2D);
-
-                //> Push the image curve points (three curves) on view 3
-                //if ( Curve_Index_Collection_List[readin_counter] == Curve1_Index ) cam3.img_points_pixels_on_curve[0].push_back(subpix_Curve_Point2D);
-                //if ( Curve_Index_Collection_List[readin_counter] == Curve2_Index ) cam3.img_points_pixels_on_curve[1].push_back(subpix_Curve_Point2D);
-                //if ( Curve_Index_Collection_List[readin_counter] == Curve3_Index ) cam3.img_points_pixels_on_curve[2].push_back(subpix_Curve_Point2D);
-                //readin_counter++;
             }
         }
     }
 
-    //extern "C"
     void Trifocal_Views::Read_In_Dataset_ImageTangents() {
         //> Set path to read image 2D tangents
         std::string View1_Tangents2D_Path = Dataset_Path + "frame_" + View1_Indx_Str + "-tgts-2D.txt";
@@ -148,10 +244,6 @@ namespace TrifocalViewsWrapper {
             while ( View1_Tangents2D_File >> subpix_x >> subpix_y ) {
                 Eigen::Vector2d subpix_Curve_Tangent2D{subpix_x, subpix_y};
                 cam1.img_tangents_pixels.push_back(subpix_Curve_Tangent2D);
-
-                //> Push the image curve tangents on view 1
-                //if ( Curve_Index_Collection_List[readin_counter] == Curve1_Index ) cam1.img_tangents_pixels_on_curve.push_back(subpix_Curve_Tangent2D);
-                //readin_counter++;
             }
         }
 
@@ -164,10 +256,6 @@ namespace TrifocalViewsWrapper {
             while ( View2_Tangents2D_File >> subpix_x >> subpix_y ) {
                 Eigen::Vector2d subpix_Curve_Tangent2D{subpix_x, subpix_y};
                 cam2.img_tangents_pixels.push_back(subpix_Curve_Tangent2D);
-
-                //> Push the image curve tangents on view 2
-                //if ( Curve_Index_Collection_List[readin_counter] == Curve2_Index ) cam2.img_tangents_pixels_on_curve.push_back(subpix_Curve_Tangent2D);
-                //readin_counter++;
             }
         }
 
@@ -180,10 +268,6 @@ namespace TrifocalViewsWrapper {
             while ( View3_Tangents2D_File >> subpix_x >> subpix_y ) {
                 Eigen::Vector2d subpix_Curve_Tangent2D{subpix_x, subpix_y};
                 cam3.img_tangents_pixels.push_back(subpix_Curve_Tangent2D);
-
-                //> Push the image curve tangents on view 3
-                //if ( Curve_Index_Collection_List[readin_counter] == Curve3_Index ) cam3.img_tangents_pixels_on_curve.push_back(subpix_Curve_Tangent2D);
-                //readin_counter++;
             }
         }
     }
@@ -474,23 +558,23 @@ namespace TrifocalViewsWrapper {
 
             //> Unperturbed tangents
             //> Camera 1
-            Homogeneous_Img_Tangents_Pixels(0) = cam1.img_tangents_pixels[pi](0);
-            Homogeneous_Img_Tangents_Pixels(1) = cam1.img_tangents_pixels[pi](1);
+            Homogeneous_Img_Tangents_Pixels(0) = cam1.img_perturbed_tangents_pixels[pi](0);
+            Homogeneous_Img_Tangents_Pixels(1) = cam1.img_perturbed_tangents_pixels[pi](1);
             //Homogeneous_Img_Points_Pixels(2) = 1.0;
             Homogeneous_Tangent_in_Meters = inv_K * Homogeneous_Img_Tangents_Pixels;
             cam1.img_tangents_meters.push_back( { Homogeneous_Tangent_in_Meters(0), Homogeneous_Tangent_in_Meters(1) } );
             cam1.img_perturbed_tangents_meters.push_back( { Homogeneous_Tangent_in_Meters(0), Homogeneous_Tangent_in_Meters(1) } );
 
             //> Camera 2
-            Homogeneous_Img_Tangents_Pixels(0) = cam2.img_tangents_pixels[pi](0);
-            Homogeneous_Img_Tangents_Pixels(1) = cam2.img_tangents_pixels[pi](1);
+            Homogeneous_Img_Tangents_Pixels(0) = cam2.img_perturbed_tangents_pixels[pi](0);
+            Homogeneous_Img_Tangents_Pixels(1) = cam2.img_perturbed_tangents_pixels[pi](1);
             Homogeneous_Tangent_in_Meters = inv_K * Homogeneous_Img_Tangents_Pixels;
             cam2.img_tangents_meters.push_back( { Homogeneous_Tangent_in_Meters(0), Homogeneous_Tangent_in_Meters(1) } );
             cam2.img_perturbed_tangents_meters.push_back( { Homogeneous_Tangent_in_Meters(0), Homogeneous_Tangent_in_Meters(1) } );
 
             //> Camera 3
-            Homogeneous_Img_Tangents_Pixels(0) = cam3.img_tangents_pixels[pi](0);
-            Homogeneous_Img_Tangents_Pixels(1) = cam3.img_tangents_pixels[pi](1);
+            Homogeneous_Img_Tangents_Pixels(0) = cam3.img_perturbed_tangents_pixels[pi](0);
+            Homogeneous_Img_Tangents_Pixels(1) = cam3.img_perturbed_tangents_pixels[pi](1);
             Homogeneous_Tangent_in_Meters = inv_K * Homogeneous_Img_Tangents_Pixels;
             cam3.img_tangents_meters.push_back( { Homogeneous_Tangent_in_Meters(0), Homogeneous_Tangent_in_Meters(1) } );
             cam3.img_perturbed_tangents_meters.push_back( { Homogeneous_Tangent_in_Meters(0), Homogeneous_Tangent_in_Meters(1)} );
@@ -516,7 +600,58 @@ namespace TrifocalViewsWrapper {
         F31 = mg_util.getFundamentalMatrix( inv_K, R31, T31 );
     }
 
-    //extern "C"
+    void Trifocal_Views::Write_Triplet_Edgles_to_File() {
+
+        //> Write triplet edgels to a file
+        std::ofstream Triplet_Edgels_File;
+        std::string Write_Triplet_Edgels_File_Path = REPO_DIR + "Synthetic_Triplet_Edgels.txt";
+        Triplet_Edgels_File.open(Write_Triplet_Edgels_File_Path);
+        if ( !Triplet_Edgels_File.is_open() ) std::cout << "Failed to create the file " << Write_Triplet_Edgels_File_Path << std::endl;
+        Triplet_Edgels_File << std::setprecision(16);
+        for (int i = 0; i < cam1.img_perturbed_points_meters.size(); i++) {
+            Triplet_Edgels_File << cam1.img_perturbed_points_meters[i](0)   << "\t" << cam1.img_perturbed_points_meters[i](1)   << "\t";
+            Triplet_Edgels_File << cam1.img_perturbed_tangents_meters[i](0) << "\t" << cam1.img_perturbed_tangents_meters[i](1) << "\t";
+            Triplet_Edgels_File << cam2.img_perturbed_points_meters[i](0)   << "\t" << cam2.img_perturbed_points_meters[i](1)   << "\t";
+            Triplet_Edgels_File << cam2.img_perturbed_tangents_meters[i](0) << "\t" << cam2.img_perturbed_tangents_meters[i](1) << "\t";
+            Triplet_Edgels_File << cam3.img_perturbed_points_meters[i](0)   << "\t" << cam3.img_perturbed_points_meters[i](1)   << "\t";
+            Triplet_Edgels_File << cam3.img_perturbed_tangents_meters[i](0) << "\t" << cam3.img_perturbed_tangents_meters[i](1) << "\n";
+        }
+
+        //> Write GT Poses to a file
+        std::ofstream GT_Poses21_File, GT_Poses31_File;
+        std::string Write_GT_Poses21_File_Path = REPO_DIR + "Synthetic_GT_Poses21.txt";
+        std::string Write_GT_Poses31_File_Path = REPO_DIR + "Synthetic_GT_Poses31.txt";
+        GT_Poses21_File.open(Write_GT_Poses21_File_Path);
+        if ( !GT_Poses21_File.is_open() ) std::cout << "Failed to create the file " << Write_GT_Poses21_File_Path << std::endl;
+        GT_Poses31_File.open(Write_GT_Poses31_File_Path);
+        if ( !GT_Poses31_File.is_open() ) std::cout << "Failed to create the file " << Write_GT_Poses31_File_Path << std::endl;
+        GT_Poses21_File << std::setprecision(16);
+        GT_Poses21_File << R21(0,0) << "\t" << R21(0,1) << "\t" << R21(0,2) << "\n";
+        GT_Poses21_File << R21(1,0) << "\t" << R21(1,1) << "\t" << R21(1,2) << "\n";
+        GT_Poses21_File << R21(2,0) << "\t" << R21(2,1) << "\t" << R21(2,2) << "\n";
+        GT_Poses21_File << T21(0)   << "\t" << T21(1)   << "\t" << T21(2)   << "\n";
+        GT_Poses31_File << std::setprecision(16);
+        GT_Poses31_File << R31(0,0) << "\t" << R31(0,1) << "\t" << R31(0,2) << "\n";
+        GT_Poses31_File << R31(1,0) << "\t" << R31(1,1) << "\t" << R31(1,2) << "\n";
+        GT_Poses31_File << R31(2,0) << "\t" << R31(2,1) << "\t" << R31(2,2) << "\n";
+        GT_Poses31_File << T31(0)   << "\t" << T31(1)   << "\t" << T31(2)   << "\n";
+
+        //> Write intrinsic matrix to a file
+        std::ofstream Intrinsic_Matrix_File;
+        std::string Write_Intrinsic_Matrix_File_Path = REPO_DIR + "Synthetic_Intrinsic_Matrix.txt";
+        Intrinsic_Matrix_File.open(Write_Intrinsic_Matrix_File_Path);
+        if ( !Intrinsic_Matrix_File.is_open() ) std::cout << "Failed to create the file " << Write_Intrinsic_Matrix_File_Path << std::endl;
+        Intrinsic_Matrix_File << std::setprecision(16);
+        Intrinsic_Matrix_File << K(0,0) << "\t" << K(0,1) << "\t" << K(0,2) << "\n";
+        Intrinsic_Matrix_File << K(1,0) << "\t" << K(1,1) << "\t" << K(1,2) << "\n";
+        Intrinsic_Matrix_File << K(2,0) << "\t" << K(2,1) << "\t" << K(2,2) << "\n";
+
+        Triplet_Edgels_File.close();
+        GT_Poses21_File.close();
+        GT_Poses31_File.close();
+        Intrinsic_Matrix_File.close();
+    }
+
     int Trifocal_Views::getRandPermNum(std::vector<int>& v) {
         //> Credit: https://www.geeksforgeeks.org/generate-a-random-permutation-of-1-to-n/
         //> Size of the vector
@@ -540,7 +675,6 @@ namespace TrifocalViewsWrapper {
         return num;
     }
 
-    //extern "C"
     void Trifocal_Views::generateRandPermIndices(int n, std::vector<int> & All_Indices) {
         //> Edited from: https://www.geeksforgeeks.org/generate-a-random-permutation-of-1-to-n/
         std::vector<int> v(n);

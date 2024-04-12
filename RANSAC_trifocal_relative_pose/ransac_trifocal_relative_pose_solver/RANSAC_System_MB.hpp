@@ -45,7 +45,7 @@ namespace RANSAC_Estimator {
         void Solve_Relative_Pose( magmaHCWrapper::Problem_Params* pp );
         void Transfer_Data_From_GPU_to_CPU();
         void Write_Solutions_To_Files( std::ofstream &GPUHC_Solution_File );
-        void Transform_Solutions_To_Relative_Poses( TrifocalViewsWrapper::Trifocal_Views views );
+        void Transform_Solutions_To_Relative_Poses( TrifocalViewsWrapper::Trifocal_Views views, magmaHCWrapper::Problem_Params* pp );
         void Find_Solution_With_Maximal_Inliers( TrifocalViewsWrapper::Trifocal_Views views );
         bool Solution_Residual_From_GroundTruths( TrifocalViewsWrapper::Trifocal_Views views );
         void Push_Block_Cycle_Time();
@@ -62,10 +62,21 @@ namespace RANSAC_Estimator {
         magma_int_t       *h_Hx_idx;
         magma_int_t       *h_Ht_idx;
 
+        //> 
+        std::vector< int > Number_of_Real_Sols;
+        std::vector< int > Number_of_Real_and_Positive_Sols;
+
+        //> RANSAC so-far-the-best estimation
         Eigen::Matrix3d final_R21;
         Eigen::Matrix3d final_R31;
         Eigen::Vector3d final_T21;
         Eigen::Vector3d final_T31;
+
+        //> Unnormalized so-far-the-best estimations
+        Eigen::Vector3d final_unnormalized_t21;
+        Eigen::Vector3d final_unnormalized_t31;
+        Eigen::Vector3d final_unnormalized_r21;
+        Eigen::Vector3d final_unnormalized_r31;
 
         //> Rotation and Translation Residuals
         Eigen::Vector3d R21_Residual;
@@ -74,10 +85,19 @@ namespace RANSAC_Estimator {
         Eigen::Vector3d T31_Residual;
 
         //> Stack all residuals
-        std::vector< Eigen::Vector3d > Stacked_R21_Residuals;
-        std::vector< Eigen::Vector3d > Stacked_R31_Residuals;
-        std::vector< Eigen::Vector3d > Stacked_T21_Residuals;
-        std::vector< Eigen::Vector3d > Stacked_T31_Residuals;
+        //std::vector< Eigen::Vector3d > Stacked_R21_Residuals;
+        //std::vector< Eigen::Vector3d > Stacked_R31_Residuals;
+        //std::vector< Eigen::Vector3d > Stacked_T21_Residuals;
+        //std::vector< Eigen::Vector3d > Stacked_T31_Residuals;
+
+        //> Information of the best result
+        int Final_Number_of_Inliers;
+        std::vector<int> temp_inlier_indices;
+        std::vector<int> final_inlier_indices;
+        std::vector< std::array<int, 3> > target_params_match_indices;
+        std::vector< std::array<int, 3> > candidate_match_indices;
+        std::array<int, 3> final_match_indices;
+        std::array<float, 18> final_depths;
 
         //> Timings
         real_Double_t     gpu_time;
@@ -133,6 +153,8 @@ namespace RANSAC_Estimator {
 
         Eigen::Vector3d r21;
         Eigen::Vector3d r31;
+        Eigen::Vector3d t21;
+        Eigen::Vector3d t31;
         std::vector< Eigen::Vector3d > normalized_t21;
         std::vector< Eigen::Vector3d > normalized_t31;
         std::vector< Eigen::Matrix3d > R21;
@@ -141,8 +163,16 @@ namespace RANSAC_Estimator {
         std::vector< Eigen::Matrix3d > E31;
         std::vector< Eigen::Matrix3d > F21;
         std::vector< Eigen::Matrix3d > F31;
-        Eigen::Vector3d t21;
-        Eigen::Vector3d t31;
+        
+        //> The depths, exported out for polynomial residual computation
+        std::vector< std::array<float, 18> > Depths_Sols;
+        std::array<float, 18> depths;
+
+        //> Raw, unnormalized poses, used to write to the result information file for solution refinement
+        std::vector< Eigen::Vector3d > unnormalized_t21;
+        std::vector< Eigen::Vector3d > unnormalized_t31;
+        std::vector< Eigen::Vector3d > cayley_vars_r21;
+        std::vector< Eigen::Vector3d > cayley_vars_r31;
 
         //> TESTING
         std::vector< std::vector<float> > Depths_real;

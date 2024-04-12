@@ -40,6 +40,20 @@ namespace TEST_WITH_WRITTEN_FILES {
         Final_Result_Information.open(write_file_dir_Result_Information);
         if ( !Final_Result_Information.is_open() ) std::cout << "File " << write_file_dir_Result_Information << " cannot be opened!" << std::endl;
 
+        //> So far the best pose from RANSAC, raw and unnormalized
+        std::string write_so_far_the_best_pose_r21 = REPO_DIR + "So_far_the_best_RANSAC_Pose_r21.txt";
+        std::string write_so_far_the_best_pose_r31 = REPO_DIR + "So_far_the_best_RANSAC_Pose_r31.txt";
+        std::string write_so_far_the_best_pose_t21 = REPO_DIR + "So_far_the_best_RANSAC_Pose_t21.txt";
+        std::string write_so_far_the_best_pose_t31 = REPO_DIR + "So_far_the_best_RANSAC_Pose_t31.txt";
+        SoFarTheBest_Pose_R21_File.open( write_so_far_the_best_pose_r21 );
+        SoFarTheBest_Pose_R31_File.open( write_so_far_the_best_pose_r31 );
+        SoFarTheBest_Pose_T21_File.open( write_so_far_the_best_pose_t21 );
+        SoFarTheBest_Pose_T31_File.open( write_so_far_the_best_pose_t31 );
+        if ( !SoFarTheBest_Pose_R21_File.is_open() ) std::cout << "File " << write_so_far_the_best_pose_r21 << " cannot be opened!" << std::endl;
+        if ( !SoFarTheBest_Pose_R31_File.is_open() ) std::cout << "File " << write_so_far_the_best_pose_r31 << " cannot be opened!" << std::endl;
+        if ( !SoFarTheBest_Pose_T21_File.is_open() ) std::cout << "File " << write_so_far_the_best_pose_t21 << " cannot be opened!" << std::endl;
+        if ( !SoFarTheBest_Pose_T31_File.is_open() ) std::cout << "File " << write_so_far_the_best_pose_t31 << " cannot be opened!" << std::endl;
+
         //> Pose Residuals File
         std::string write_file_dir_Pose_Residuals_R21 = REPO_DIR + "Stacked_Residuals_R21.txt";
         Pose_Residuals_R21_File.open(write_file_dir_Pose_Residuals_R21);
@@ -116,22 +130,30 @@ namespace TEST_WITH_WRITTEN_FILES {
         }
     }
 
-    void write_files_for_test::write_Pose_Residuals( 
-         std::vector<Eigen::Vector3d> Stacked_R21_Residuals, std::vector<Eigen::Vector3d> Stacked_R31_Residuals,
-         std::vector<Eigen::Vector3d> Stacked_T21_Residuals, std::vector<Eigen::Vector3d> Stacked_T31_Residuals )
+    void write_files_for_test::write_So_far_the_best_Pose( 
+         Eigen::Vector3d best_raw_r21, Eigen::Vector3d best_raw_r31,
+         Eigen::Vector3d best_raw_t21, Eigen::Vector3d best_raw_t31 )
     {
-        for (int i = 0; i < Stacked_R21_Residuals.size(); i++) {
-            for (int j = 0; j < 3; j++) {
-                Pose_Residuals_R21_File << Stacked_R21_Residuals[i](j) << "\t";
-                Pose_Residuals_R31_File << Stacked_R31_Residuals[i](j) << "\t";
-                Pose_Residuals_T21_File << Stacked_T21_Residuals[i](j) << "\t"; 
-                Pose_Residuals_T31_File << Stacked_T31_Residuals[i](j) << "\t";
-            }
-            Pose_Residuals_R21_File << "\n";
-            Pose_Residuals_R31_File << "\n";
-            Pose_Residuals_T21_File << "\n";
-            Pose_Residuals_T31_File << "\n";
+        SoFarTheBest_Pose_R21_File << best_raw_r21(0) << "\t" << best_raw_r21(1) << "\t" << best_raw_r21(2) << "\n";
+        SoFarTheBest_Pose_R31_File << best_raw_r31(0) << "\t" << best_raw_r31(1) << "\t" << best_raw_r31(2) << "\n";
+        SoFarTheBest_Pose_T21_File << best_raw_t21(0) << "\t" << best_raw_t21(1) << "\t" << best_raw_t21(2) << "\n";
+        SoFarTheBest_Pose_T31_File << best_raw_t31(0) << "\t" << best_raw_t31(1) << "\t" << best_raw_t31(2) << "\n";
+    }
+
+    void write_files_for_test::write_Pose_Residuals( 
+         Eigen::Vector3d R21_Residuals, Eigen::Vector3d R31_Residuals,
+         Eigen::Vector3d T21_Residuals, Eigen::Vector3d T31_Residuals )
+    {
+        for (int j = 0; j < 3; j++) {
+            Pose_Residuals_R21_File << R21_Residuals(j) << "\t";
+            Pose_Residuals_R31_File << R31_Residuals(j) << "\t";
+            Pose_Residuals_T21_File << T21_Residuals(j) << "\t"; 
+            Pose_Residuals_T31_File << T31_Residuals(j) << "\t";
         }
+        Pose_Residuals_R21_File << "\n";
+        Pose_Residuals_R31_File << "\n";
+        Pose_Residuals_T21_File << "\n";
+        Pose_Residuals_T31_File << "\n";   
     }
 
     void write_files_for_test::write_time_when_depths_are_positive( std::vector<float> time_cue ) {
@@ -142,8 +164,8 @@ namespace TEST_WITH_WRITTEN_FILES {
         for (int i = 0; i < cycle_clock_times.size(); i++ ) Block_Cycle_Times_File << cycle_clock_times[i] << "\n";
     }
 
-    void write_files_for_test::write_final_information( std::vector<int> final_indices, std::array<int, 3> final_match_indices,
-                                                        TrifocalViewsWrapper::Trifocal_Views views,
+    void write_files_for_test::write_final_information( std::vector<int> final_indices, TrifocalViewsWrapper::Trifocal_Views views,
+                                                        std::array<int, 3> final_match_indices, std::array<float, 18> final_depths,
                                                         Eigen::Vector3d final_Unnormalized_R21, Eigen::Vector3d final_Unnormalized_R31, 
                                                         Eigen::Vector3d final_Unnormalized_T21, Eigen::Vector3d final_Unnormalized_T31)
     {
@@ -154,46 +176,58 @@ namespace TEST_WITH_WRITTEN_FILES {
         int p1_idx = final_match_indices[0];
         int p2_idx = final_match_indices[1];
         int p3_idx = final_match_indices[2];
+        std::cout << "Writing point correspondences indices: " << p1_idx << ", " << p2_idx << ", " << p3_idx << std::endl;
 
         //> Write target params
-        Final_Result_Information << views.cam1.img_perturbed_points_meters[p1_idx](0) << "\t";
-        Final_Result_Information << views.cam1.img_perturbed_points_meters[p1_idx](1) << "\t1.0\n";
-        Final_Result_Information << views.cam2.img_perturbed_points_meters[p1_idx](0) << "\t";
-        Final_Result_Information << views.cam2.img_perturbed_points_meters[p1_idx](1) << "\t1.0\n";
-        Final_Result_Information << views.cam3.img_perturbed_points_meters[p1_idx](0) << "\t";
-        Final_Result_Information << views.cam3.img_perturbed_points_meters[p1_idx](1) << "\t1.0\n";
-        Final_Result_Information << views.cam1.img_perturbed_points_meters[p2_idx](0) << "\t";
-        Final_Result_Information << views.cam1.img_perturbed_points_meters[p2_idx](1) << "\t1.0\n";
-        Final_Result_Information << views.cam2.img_perturbed_points_meters[p2_idx](0) << "\t";
-        Final_Result_Information << views.cam2.img_perturbed_points_meters[p2_idx](1) << "\t1.0\n";
-        Final_Result_Information << views.cam3.img_perturbed_points_meters[p2_idx](0) << "\t";
-        Final_Result_Information << views.cam3.img_perturbed_points_meters[p2_idx](1) << "\t1.0\n";
-        Final_Result_Information << views.cam1.img_perturbed_points_meters[p3_idx](0) << "\t";
-        Final_Result_Information << views.cam1.img_perturbed_points_meters[p3_idx](1) << "\t1.0\n";
-        Final_Result_Information << views.cam2.img_perturbed_points_meters[p3_idx](0) << "\t";
-        Final_Result_Information << views.cam2.img_perturbed_points_meters[p3_idx](1) << "\t1.0\n";
-        Final_Result_Information << views.cam3.img_perturbed_points_meters[p3_idx](0) << "\t";
-        Final_Result_Information << views.cam3.img_perturbed_points_meters[p3_idx](1) << "\t1.0\n";
-        Final_Result_Information << views.cam1.img_perturbed_tangents_meters[p1_idx](0) << "\t";
-        Final_Result_Information << views.cam1.img_perturbed_tangents_meters[p1_idx](1) << "\t0.0\n";
-        Final_Result_Information << views.cam2.img_perturbed_tangents_meters[p1_idx](0) << "\t";
-        Final_Result_Information << views.cam2.img_perturbed_tangents_meters[p1_idx](1) << "\t0.0\n";
-        Final_Result_Information << views.cam3.img_perturbed_tangents_meters[p1_idx](0) << "\t";
-        Final_Result_Information << views.cam3.img_perturbed_tangents_meters[p1_idx](1) << "\t0.0\n";
-        Final_Result_Information << views.cam1.img_perturbed_tangents_meters[p2_idx](0) << "\t";
-        Final_Result_Information << views.cam1.img_perturbed_tangents_meters[p2_idx](1) << "\t0.0\n";
-        Final_Result_Information << views.cam2.img_perturbed_tangents_meters[p2_idx](0) << "\t";
-        Final_Result_Information << views.cam2.img_perturbed_tangents_meters[p2_idx](1) << "\t0.0\n";
-        Final_Result_Information << views.cam3.img_perturbed_tangents_meters[p2_idx](0) << "\t";
-        Final_Result_Information << views.cam3.img_perturbed_tangents_meters[p2_idx](1) << "\t0.0\n";
+        Final_Result_Information << views.cam1.img_perturbed_points_meters[p1_idx](0) << "\n";
+        Final_Result_Information << views.cam1.img_perturbed_points_meters[p1_idx](1) << "\n";
+        Final_Result_Information << views.cam2.img_perturbed_points_meters[p1_idx](0) << "\n";
+        Final_Result_Information << views.cam2.img_perturbed_points_meters[p1_idx](1) << "\n";
+        Final_Result_Information << views.cam3.img_perturbed_points_meters[p1_idx](0) << "\n";
+        Final_Result_Information << views.cam3.img_perturbed_points_meters[p1_idx](1) << "\n";
+        Final_Result_Information << views.cam1.img_perturbed_points_meters[p2_idx](0) << "\n";
+        Final_Result_Information << views.cam1.img_perturbed_points_meters[p2_idx](1) << "\n";
+        Final_Result_Information << views.cam2.img_perturbed_points_meters[p2_idx](0) << "\n";
+        Final_Result_Information << views.cam2.img_perturbed_points_meters[p2_idx](1) << "\n";
+        Final_Result_Information << views.cam3.img_perturbed_points_meters[p2_idx](0) << "\n";
+        Final_Result_Information << views.cam3.img_perturbed_points_meters[p2_idx](1) << "\n";
+        Final_Result_Information << views.cam1.img_perturbed_points_meters[p3_idx](0) << "\n";
+        Final_Result_Information << views.cam1.img_perturbed_points_meters[p3_idx](1) << "\n";
+        Final_Result_Information << views.cam2.img_perturbed_points_meters[p3_idx](0) << "\n";
+        Final_Result_Information << views.cam2.img_perturbed_points_meters[p3_idx](1) << "\n";
+        Final_Result_Information << views.cam3.img_perturbed_points_meters[p3_idx](0) << "\n";
+        Final_Result_Information << views.cam3.img_perturbed_points_meters[p3_idx](1) << "\n";
+        Final_Result_Information << views.cam1.img_perturbed_tangents_meters[p1_idx](0) << "\n";
+        Final_Result_Information << views.cam1.img_perturbed_tangents_meters[p1_idx](1) << "\n";
+        Final_Result_Information << views.cam2.img_perturbed_tangents_meters[p1_idx](0) << "\n";
+        Final_Result_Information << views.cam2.img_perturbed_tangents_meters[p1_idx](1) << "\n";
+        Final_Result_Information << views.cam3.img_perturbed_tangents_meters[p1_idx](0) << "\n";
+        Final_Result_Information << views.cam3.img_perturbed_tangents_meters[p1_idx](1) << "\n";
+        Final_Result_Information << views.cam1.img_perturbed_tangents_meters[p2_idx](0) << "\n";
+        Final_Result_Information << views.cam1.img_perturbed_tangents_meters[p2_idx](1) << "\n";
+        Final_Result_Information << views.cam2.img_perturbed_tangents_meters[p2_idx](0) << "\n";
+        Final_Result_Information << views.cam2.img_perturbed_tangents_meters[p2_idx](1) << "\n";
+        Final_Result_Information << views.cam3.img_perturbed_tangents_meters[p2_idx](0) << "\n";
+        Final_Result_Information << views.cam3.img_perturbed_tangents_meters[p2_idx](1) << "\n";
 
         //Final_Result_Information << final_match_indices[0] << "\t";
         //Final_Result_Information << final_match_indices[1] << "\t";
         //Final_Result_Information << final_match_indices[2] << "\n";
 
-        //> Write Unnormalized R21
-        for (int i = 0; i < 3; i++) Final_Result_Information << final_Unnormalized_R21[i] << "\t";
-        Final_Result_Information << "\n";
+        //> First write depth solutions
+        for (int i = 0; i < 18; i++) Final_Result_Information << final_depths[i] << "\n";
+
+        //Final_Result_Information << "\n";
+
+        //> Write Unnormalized T21
+        for (int i = 0; i < 3; i++) Final_Result_Information << final_Unnormalized_T21[i] << "\n";
+        //Final_Result_Information << "\n";
+
+        //> Write Unnormalized T31
+        for (int i = 0; i < 3; i++) Final_Result_Information << final_Unnormalized_T31[i] << "\n";
+        //Final_Result_Information << "\n";
+
+
         /*for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 3; j++) {
                 Final_Result_Information << final_Unnormalized_R21(i,j) << "\t";
@@ -202,24 +236,19 @@ namespace TEST_WITH_WRITTEN_FILES {
         }
         Final_Result_Information << "\n";*/
 
+        //> Write Unnormalized R21
+        for (int i = 0; i < 3; i++) Final_Result_Information << final_Unnormalized_R21[i] << "\n";
+
         //> Write Unnormalized R31
-        for (int i = 0; i < 3; i++) Final_Result_Information << final_Unnormalized_R31[i] << "\t";
-        Final_Result_Information << "\n";
+        for (int i = 0; i < 3; i++) Final_Result_Information << final_Unnormalized_R31[i] << "\n";
+        //Final_Result_Information << "\n";
         /*for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 3; j++) {
                 Final_Result_Information << final_Unnormalized_R31(i,j) << "\t";
             }
             Final_Result_Information << "\n";
-        }
-        Final_Result_Information << "\n";*/
-
-        //> Write Unnormalized T21
-        for (int i = 0; i < 3; i++) Final_Result_Information << final_Unnormalized_T21[i] << "\t";
+        }*/
         Final_Result_Information << "\n";
-
-        //> Write Unnormalized T31
-        for (int i = 0; i < 3; i++) Final_Result_Information << final_Unnormalized_T31[i] << "\t";
-        Final_Result_Information << "\n\n";
     }
 
     void write_files_for_test::close_all_files() {
@@ -236,6 +265,11 @@ namespace TEST_WITH_WRITTEN_FILES {
         #if TEST_BLOCK_CYCLE_TIME
         Block_Cycle_Times_File.close();
         #endif
+
+        SoFarTheBest_Pose_R21_File.close();
+        SoFarTheBest_Pose_R31_File.close();
+        SoFarTheBest_Pose_T21_File.close();
+        SoFarTheBest_Pose_T31_File.close();
 
         Pose_Residuals_R21_File.close();
         Pose_Residuals_R31_File.close();
