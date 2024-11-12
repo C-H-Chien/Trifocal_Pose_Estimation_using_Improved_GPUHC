@@ -89,8 +89,6 @@ class GPU_HC_Solver {
     int          *d_Trifocal_Sols_Batch_Index[MAX_NUM_OF_GPUS] = {NULL};
     
 public:
-    bool                    Use_P2C;
-
     //> The timers
     real_Double_t           gpu_time[MAX_NUM_OF_GPUS] = {0.0};
     real_Double_t           transfer_h2d_time[MAX_NUM_OF_GPUS] = {0.0};
@@ -132,7 +130,6 @@ private:
 
     std::string HC_problem;
     std::string HC_print_problem_name;
-    std::string GPUHC_type;
     int GPUHC_Max_Steps;
     int GPUHC_Max_Correction_Steps;
     int GPUHC_delta_t_incremental_steps;

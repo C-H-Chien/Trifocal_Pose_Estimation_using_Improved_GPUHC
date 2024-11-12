@@ -109,7 +109,7 @@ bool CPU_HC_Solver::Read_Problem_Data() {
     bool is_Data_Read_Successfully = false;
 
     //> Data reader
-    Load_Problem_Data = std::shared_ptr<Data_Reader>(new Data_Reader(Problem_File_Path, RANSAC_Data_File_Path, Num_Of_Tracks, Num_Of_Vars, Num_Of_Params, false));
+    Load_Problem_Data = std::shared_ptr<Data_Reader>(new Data_Reader(Problem_File_Path, RANSAC_Data_File_Path, Num_Of_Tracks, Num_Of_Vars, Num_Of_Params));
 
     //> (1) Start parameters
     is_Data_Read_Successfully = Load_Problem_Data->Read_Start_Params( h_Start_Params );

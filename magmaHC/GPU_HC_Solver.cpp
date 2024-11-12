@@ -45,7 +45,6 @@ GPU_HC_Solver::GPU_HC_Solver(YAML::Node Problem_Settings_File)
     //> (1) Problem Name and GPU-HC Type
     HC_problem                      = Problem_Setting_YAML_File["problem_name"].as<std::string>();
     HC_print_problem_name           = Problem_Setting_YAML_File["problem_print_out_name"].as<std::string>();
-    GPUHC_type                      = Problem_Setting_YAML_File["GPUHC_Type"].as<std::string>();
     //> (2) GPU-HC Configurations
     GPUHC_Max_Steps                 = Problem_Setting_YAML_File["GPUHC_Max_Steps"].as<int>();
     GPUHC_Max_Correction_Steps      = Problem_Setting_YAML_File["GPUHC_Max_Correction_Steps"].as<int>();

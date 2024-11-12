@@ -14,7 +14,7 @@ set(CH_MAGMADIR    "/home/chchien/magma-openblas")
 set(CH_YAMLCPP_DIR "/home/chchien/thirdParty/yaml-cpp")
 
 # this is for custom options on ICL machines
-set(ICL_BUILD 1)
+# set(ICL_BUILD 1)
 
 set(CMAKE_CXX_FLAGS_DEBUG "-g -Wall" CACHE STRING "" FORCE)
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -ffast-math" CACHE STRING "" FORCE)
