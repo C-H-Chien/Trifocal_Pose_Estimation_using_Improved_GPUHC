@@ -1,0 +1,34 @@
+%YAML:1.0
+
+
+#> Problem Name (must be the same as the problem folder name)
+problem_name: trifocal_2op1p_30x30
+problem_print_out_name: Trifocal Relative Pose Problem from Lines at Points
+
+#> GPU Settings
+Num_Of_GPUs:  1
+
+#> GPU-HC Settings
+GPUHC_Max_Steps: 80
+GPUHC_Max_Correction_Steps: 3
+GPUHC_Num_Of_Steps_to_Increase_Delta_t: 4
+
+#> Problem spec
+Num_Of_Vars: 30
+Num_Of_Params: 33
+Num_Of_Tracks: 312
+dHdx_Max_Terms: 8
+dHdx_Max_Parts: 5
+dHdt_Max_Terms: 16
+dHdt_Max_Parts: 6
+Max_Order_Of_T: 2
+Num_Of_Coeffs_From_Params: 37
+
+#> Algorithmic Setting
+Abort_RANSAC_by_Good_Sol: true
+
+#> RANSAC data
+RANSAC_Dataset: Synthetic
+
+#> CPU-HC Settings
+Num_Of_Cores:  4
