@@ -46,10 +46,6 @@ public:
     template< typename T >
     bool Read_unified_dHdx_dHdt_Indices( T* &h_unified_dHdx_dHdt_Index, T* h_dHdx_Index, T* h_dHdt_Index, int dHdx_size, int dHdt_size );
 
-    bool Construct_Coeffs_From_Params( std::string HC_Problem, \
-        magmaFloatComplex* h_Target_Params,    magmaFloatComplex* h_Start_Params, \
-        magmaFloatComplex* h_dHdx_PHC_Coeffs,  magmaFloatComplex* h_dHdt_PHC_Coeffs );
-
     //> RANSAC Data
     int get_Num_Of_Triplet_Edgels( int tp_index );
     bool Read_Camera_Poses( float Pose21[12], float Pose31[12], int tp_index );

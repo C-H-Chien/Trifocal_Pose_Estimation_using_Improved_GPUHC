@@ -19,7 +19,6 @@
 #include "magma_v2.h"
 
 #include "Data_Reader.hpp"
-#include "./PHC_Coeffs/p2c-trifocal_2op1p_30x30.h"
 
 Data_Reader::Data_Reader(std::string Problem_Filename, std::string RANSAC_Data_File_Path, const int Num_Of_Tracks, const int Num_Of_Vars, const int Num_Of_Params) \
     : num_of_tracks(Num_Of_Tracks), num_of_variables(Num_Of_Vars), num_of_params(Num_Of_Params), RANSAC_Data_Path_(RANSAC_Data_File_Path) {
@@ -186,20 +185,6 @@ bool Data_Reader::Read_unified_dHdx_dHdt_Indices( T* &h_unified_dHdx_dHdt_Index,
     printf("\n");
 #endif
     
-    return true;
-}
-
-bool Data_Reader::Construct_Coeffs_From_Params( std::string HC_Problem, \
-        magmaFloatComplex* h_Target_Params,     magmaFloatComplex* h_Start_Params, \
-        magmaFloatComplex* h_dHdx_PHC_Coeffs,   magmaFloatComplex* h_dHdt_PHC_Coeffs ) 
-{
-    if (HC_Problem == "trifocal_2op1p_30x30") {
-        magmaHCWrapper::p2c_trifocal_2op1p_30x30(h_Target_Params, h_Start_Params, h_dHdx_PHC_Coeffs, h_dHdt_PHC_Coeffs);
-    }
-    else {
-        LOG_ERROR("Invalid HC problem name or P2C function is not included in the Construct_Coeffs_From_Params.");
-        return false;
-    }
     return true;
 }
 
