@@ -11,7 +11,7 @@ GPUs, respectively. Strategies for speed improvements are four-fold: _(i)_ direc
 - OpenBLAS 0.3.X <br />
 - [YAML-CPP](https://github.com/jbeder/yaml-cpp) (this is used to parse data from a .yaml file.) <br />
 
-## Build the code
+## Build and run the code
 Make sure the directories for the dependencies are changed based on your machine/server (See ``CMakeLists.txt`` and ``magmaHC/CMakeLists.txt`` for more information). Follow the standard steps to build the code:
 ```bash
 $ mkdir build && cd build
@@ -23,12 +23,11 @@ THe executive file resides in ``build/bin/`` and can be run by
 $ ./magmaHC-main 
 ```
 Note that the main file is under ``cmd/magmaHC-main.cpp``.
-
-## Warnings of Very Slow Computation Speed on CPU
-When executing the code, make sure to use as many as CPU cores to run the CPU-HC solver as it could take a long time upon completion. Alternatively, you could comment out the [CPU-HC](https://github.com/C-H-Chien/Trifocal_Pose_Estimation_using_GPUHC_plusplus/blob/95d97031abe5675e15f93021798631a8d72df4da/cmd/magmaHC-main.cpp#L257) in ``cmd/main.cpp``. 
+When executing the code, make sure to use as many as CPU cores to run the CPU-HC solver as it could take a long time upon completion. Alternatively, you could comment out the [CPU-HC](https://github.com/C-H-Chien/Trifocal_Pose_Estimation_using_GPUHC_plusplus/blob/95d97031abe5675e15f93021798631a8d72df4da/cmd/magmaHC-main.cpp#L257) in ``cmd/main.cpp``. <br />
+The trifocal pose solutions can be found under ``Output_Write_Files/``.
 
 ## Incremental Speed Improvements
-If you'd like to recreate the experiments of incremental performance improvements reported in the papers, a set of GPU kernels and device functions are arxived in ``arxived_GPU_code/``. It should not be hard to include them in the ``magmaHC/GPU_HC_Solver.cpp`` to run the code. See README_arxived_GPU_code.md for more information. 
+If you'd like to recreate the experiments of incremental performance improvements reported in the papers, a set of GPU kernels and device functions are arxived in ``arxived_GPU_code/``. It should not be hard to include them in the ``magmaHC/GPU_HC_Solver.cpp`` to run the code. See [README_arxived_GPU_code.md](https://github.com/C-H-Chien/Trifocal_Pose_Estimation_using_GPUHC_plusplus/blob/master/arxived_GPU_code/README_arxived_GPU_code.md) for more information. 
 
 ## Settings in the YAML file
 Most of the settings in the ``problems/trifocal_2op1p_30x30/gpuhc_settings.yaml`` file can be remained unchanged; however, the following parameters shall be specified depending on user's need:
