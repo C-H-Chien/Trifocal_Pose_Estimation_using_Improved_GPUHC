@@ -25,7 +25,7 @@ Max_Order_Of_T: 2
 Num_Of_Coeffs_From_Params: 37
 
 #> Algorithmic Setting
-Abort_RANSAC_by_Good_Sol: true
+Abort_RANSAC_by_Good_Sol: false
 
 #> RANSAC data
 RANSAC_Dataset: Synthetic
