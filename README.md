@@ -20,11 +20,13 @@ $ make -j
 ```
 THe executive file resides in ``build/bin/`` and can be run by
 ```bash
-$ ./magmaHC-main 
+$ ./magmaHC-main -p trifocal_2op1p_30x30
 ```
-Note that the main file is under ``cmd/magmaHC-main.cpp``.
-When executing the code, make sure to use as many as CPU cores to run the CPU-HC solver as it could take a long time upon completion. Alternatively, you could comment out the [CPU-HC](https://github.com/C-H-Chien/Trifocal_Pose_Estimation_using_GPUHC_plusplus/blob/95d97031abe5675e15f93021798631a8d72df4da/cmd/magmaHC-main.cpp#L257) in ``cmd/main.cpp``. <br />
-The trifocal pose solutions can be found under ``Output_Write_Files/``.
+where ``-p`` is the flag for the problem name. Here, we are solving the trifocal pose estimation problem codenamed as "trifocal_2op1p_30x30" (It means "trifocal pose estimation problem using 2 oriented point correspondence and 1 point correspondence in a formulation of 30 polynomial equations in 30 unknowns"). This flag follows the input pattern of the orifinal [GPU-HC](https://github.com/C-H-Chien/Homotopy-Continuation-Tracker-on-GPU/tree/main) code. <br /><br />
+Note that:
+- The main file is under ``cmd/magmaHC-main.cpp``.
+When executing the code, make sure to use as many as CPU cores to run the CPU-HC solver as it could take a long time upon completion. Alternatively, you could comment out the [CPU-HC](https://github.com/C-H-Chien/Trifocal_Pose_Estimation_using_GPUHC_plusplus/blob/95d97031abe5675e15f93021798631a8d72df4da/cmd/magmaHC-main.cpp#L257) in ``cmd/main.cpp``.
+- The trifocal pose solutions can be found under ``Output_Write_Files/``.
 
 ## Incremental Speed Improvements
 If you'd like to recreate the experiments of incremental performance improvements reported in the papers, a set of GPU kernels and device functions are arxived in ``arxived_GPU_code/``. It should not be hard to include them in the ``magmaHC/GPU_HC_Solver.cpp`` to run the code. See [README_arxived_GPU_code.md](https://github.com/C-H-Chien/Trifocal_Pose_Estimation_using_GPUHC_plusplus/blob/master/arxived_GPU_code/README_arxived_GPU_code.md) for more information. 
