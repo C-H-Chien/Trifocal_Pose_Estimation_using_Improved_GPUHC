@@ -45,6 +45,11 @@ set (control_sources
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
+include_directories( "/users/cchien3/data/cchien3/magma-2.5.4/include" )
+include_directories( "/users/cchien3/data/cchien3/magma-2.5.4/control" )
+include_directories( "/users/cchien3/data/cchien3/magma-2.5.4/magmablas" )
+include_directories( "/gpfs/data/bkimia/cchien3/yaml-cpp/bin/include" )
+
 add_library( magmaHC ${control_sources} )
 target_compile_options(magmaHC PUBLIC -Wall ${OpenMP_CXX_FLAGS})
 
@@ -55,10 +60,9 @@ target_include_directories( magmaHC
 
 target_link_libraries(magmaHC
   PUBLIC OpenMP::OpenMP_CXX
-  ${CUDART_LIBRARY}
-  -L/apps/spacks/2023-08-14/opt/spack/linux-ubuntu23.04-x86_64/gcc-9.5.0/magma-2.7.1-5hrvjybyve3kqfgx7uv5nxxz7mktnqqw/lib magma
-  -L/apps/spacks/2023-08-14/opt/spack/linux-ubuntu23.04-x86_64/gcc-9.5.0/openblas-0.3.23-2tips3wywhkieahh6udqmjfke4flqm3l/lib openblas
-  -L/home/chchien/thirdParty/yaml-cpp/yaml-cpp-bin/lib64 yaml-cpp
+	-L/gpfs/data/bkimia/magma-cchien/lib magma
+  -L/gpfs/runtime/opt/openblas/0.3.23-u6k5fey/lib openblas
+  -L/gpfs/data/bkimia/cchien3/yaml-cpp/bin/lib64 yaml-cpp
 )
 #set_target_properties(magmaHC PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 

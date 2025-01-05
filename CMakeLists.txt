@@ -6,12 +6,14 @@ if(NOT CMAKE_CXX_STANDARD_REQUIRED)
   set(CMAKE_CXX_STANDARD_REQUIRED ON)
 endif()
 
-set(MAGMADIR    "/home/ahmad/magma-openblas")
-set(OPENBLASDIR "/home/ahmad/openblas")
-set(YAMLCPP_DIR "/home/ahmad/yaml-cpp")
+# set(MAGMADIR    "/home/ahmad/magma-openblas")
+# set(OPENBLASDIR "/home/ahmad/openblas")
+# set(YAMLCPP_DIR "/home/ahmad/yaml-cpp")
 
-set(CH_MAGMADIR    "/home/chchien/magma-openblas")
-set(CH_YAMLCPP_DIR "/home/chchien/thirdParty/yaml-cpp")
+# set(CH_MAGMADIR    "/home/chchien/magma-openblas")
+# set(CH_YAMLCPP_DIR "/home/chchien/thirdParty/yaml-cpp")
+set(CH_MAGMADIR "/users/cchien3/data/cchien3/magma-2.5.4")
+set(CH_YAMLCPP_DIR "/gpfs/data/bkimia/cchien3/yaml-cpp")
 
 # this is for custom options on ICL machines
 # set(ICL_BUILD 1)
@@ -187,7 +189,6 @@ else()
   include_directories( ${CH_YAMLCPP_DIR}/include )
   link_directories( ${CH_YAMLCPP_DIR}/yaml-cpp-bin/lib64 )
   link_directories( ${CH_MAGMADIR}/bin/lib )
-  link_directories("/apps/spacks/2023-11-15/opt/spack/linux-rocky9-x86_64/gcc-11.3.1/gcc-7.5.0-aembyabek5wcmaengfp7yn6c22xe6bq7/lib64/")
 endif()
 
 if(DEFINED ICL_BUILD)
